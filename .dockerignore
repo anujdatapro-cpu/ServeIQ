@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+.vscode
+.idea
+uploads/profiles/*
+uploads/requests/*
+*.log
+README.md
+docs/

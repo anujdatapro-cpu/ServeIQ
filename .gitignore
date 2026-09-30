@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+
+uploads/profiles/*
+!uploads/profiles/.gitkeep
+uploads/requests/*
+!uploads/requests/.gitkeep
+
+vendor/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,53 @@
+services:
+  serveiq-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: serveiq-web
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: serveiq-db
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-serveiq_db}
+      DB_USER: ${MYSQL_USER:-serveiq_user}
+      DB_PASS: ${MYSQL_PASSWORD:-serveiq_password}
+      APP_ENV: ${APP_ENV:-docker}
+      APP_DEBUG: ${APP_DEBUG:-true}
+    depends_on:
+      serveiq-db:
+        condition: service_healthy
+    volumes:
+      - .:/var/www/html
+      - serveiq_uploads:/var/www/html/uploads
+    networks:
+      - serveiq-network
+
+  serveiq-db:
+    image: mysql:8.0
+    container_name: serveiq-db
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-serveiq_db}
+      MYSQL_USER: ${MYSQL_USER:-serveiq_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-serveiq_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    ports:
+      - "3307:3306"
+    volumes:
+      - serveiq_db_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - serveiq-network
+
+volumes:
+  serveiq_db_data:
+  serveiq_uploads:
+
+networks:
+  serveiq-network:
+    driver: bridge
