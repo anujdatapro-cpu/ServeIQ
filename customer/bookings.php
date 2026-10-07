@@ -148,6 +148,9 @@ require __DIR__ . '/../includes/header.php';
                                             <a href="booking_details.php?id=<?= (int)$booking['id'] ?>" class="btn btn-sm btn-outline-primary">
                                                 Details
                                             </a>
+                                            <a href="booking_receipt.php?id=<?= (int)$booking['id'] ?>" class="btn btn-sm btn-outline-success" title="Download PDF Receipt">
+                                                <i class="bi bi-file-earmark-pdf"></i> Receipt
+                                            </a>
                                             <?php if ($booking['status'] === 'completed' && !$booking['review_id']): ?>
                                                 <a href="review_booking.php?booking_id=<?= (int)$booking['id'] ?>" class="btn btn-sm btn-success">
                                                     <i class="bi bi-star-fill me-1"></i>Review

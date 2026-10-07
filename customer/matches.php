@@ -11,22 +11,31 @@ require __DIR__ . '/../config/database.php';
 
 requireCustomer();
 
-$requestId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-if (!$requestId || $requestId < 1) {
-    http_response_code(404);
-    exit('Request not found.');
-}
-
 $pdo = getDatabaseConnection();
-$request = findCustomerRequest($pdo, (int)$requestId, (int)getUserId());
-if (!$request) {
-    http_response_code(404);
-    exit('Request not found.');
+$customerId = (int)getUserId();
+$requestId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+
+// Query all customer requests to support direct navigation from workspace dropdown
+$reqListStmt = $pdo->prepare('SELECT id, title, status, created_at FROM service_requests WHERE customer_id = :customer_id ORDER BY created_at DESC');
+$reqListStmt->execute(['customer_id' => $customerId]);
+$customerRequests = $reqListStmt->fetchAll();
+
+if (!$requestId || $requestId < 1) {
+    if (!empty($customerRequests)) {
+        $requestId = (int)$customerRequests[0]['id'];
+    }
 }
 
-$allProviders = getRankedProvidersForRequest($pdo, (int)$requestId, (int)getUserId());
+$request = $requestId ? findCustomerRequest($pdo, (int)$requestId, $customerId) : null;
+
+$allProviders = ($requestId && $request) ? getRankedProvidersForRequest($pdo, (int)$requestId, $customerId) : [];
 $categories = $pdo->query('SELECT id, category_name FROM service_categories WHERE is_active = 1 ORDER BY category_name')->fetchAll();
-$matchingRequest = getMatchingRequest($pdo, (int)$requestId, (int)getUserId()) ?? [];
+$matchingRequest = ($requestId && $request) ? (getMatchingRequest($pdo, (int)$requestId, $customerId) ?? []) : [];
+$matchingAttributes = matchingRequestAttributes($matchingRequest);
+$fingerprintData = matchingDecodeJson($matchingRequest['fingerprint_data'] ?? []);
+$clarificationRequired = (bool)($fingerprintData['clarification_required'] ?? false);
+$clarificationQuestion = (string)($fingerprintData['clarification_question'] ?? '');
+$clarificationOptions = is_array($fingerprintData['clarification_options'] ?? null) ? $fingerprintData['clarification_options'] : [];
 $filters = marketplaceParseFilters($_GET, $categories, $matchingRequest);
 $filteredProviders = marketplaceFilterAndSortProviders($allProviders, $filters, $matchingRequest);
 $totalProviders = count($filteredProviders);
@@ -34,8 +43,8 @@ $pageSize = 10;
 $pageCount = max(1, (int)ceil($totalProviders / $pageSize));
 $filters['page'] = min($filters['page'], $pageCount);
 $providers = array_slice($filteredProviders, ($filters['page'] - 1) * $pageSize, $pageSize);
-$existingBooking = findBookingForRequest($pdo, (int)$requestId);
-$canBook = !$existingBooking && !in_array($request['status'], ['cancelled', 'completed'], true);
+$existingBooking = $requestId ? findBookingForRequest($pdo, (int)$requestId) : null;
+$canBook = !$existingBooking && $request && !in_array($request['status'], ['cancelled', 'completed'], true);
 
 $pageTitle = 'Recommended Providers | ServeIQ';
 $basePath = '../';
@@ -51,10 +60,13 @@ require __DIR__ . '/../includes/header.php';
                 <h1 class="mb-1">Recommended Service Providers</h1>
                 <p class="text-muted mb-0">Ranked using 6-factor weighted correlation from your ServiceDNA and verified provider profiles.</p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="request_details.php?id=<?= (int)$requestId ?>" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-1"></i>Back to Request
-                </a>
+            <div class="d-flex gap-2 flex-wrap">
+                <?php if ($requestId): ?>
+                    <a href="request_details.php?id=<?= (int)$requestId ?>" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Request
+                    </a>
+                <?php endif; ?>
+                <a href="my_requests.php" class="btn btn-outline-secondary">My Requests</a>
                 <?php if ($existingBooking): ?>
                     <a href="booking_details.php?id=<?= (int)$existingBooking['id'] ?>" class="btn btn-outline-primary">
                         <i class="bi bi-calendar-check me-1"></i>View Current Booking
@@ -63,7 +75,31 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <section class="marketplace-filters card border-0 shadow-sm rounded-4 p-3 p-lg-4 mb-4" aria-labelledby="filterHeading">
+        <?php if (!empty($customerRequests) && count($customerRequests) > 1): ?>
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-light">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <label for="requestSwitcher" class="form-label mb-0 small fw-bold text-nowrap"><i class="bi bi-arrow-left-right me-1"></i>Select Request:</label>
+                    <select id="requestSwitcher" class="form-select form-select-sm" style="max-width: 400px;" onchange="window.location.href='matches.php?id=' + this.value">
+                        <?php foreach ($customerRequests as $cr): ?>
+                            <option value="<?= (int)$cr['id'] ?>" <?= (int)$cr['id'] === $requestId ? 'selected' : '' ?>>
+                                #<?= (int)$cr['id'] ?> - <?= htmlspecialchars(mb_substr($cr['title'], 0, 45), ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars(requestStatusLabel($cr['status']), ENT_QUOTES, 'UTF-8') ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!$request): ?>
+            <div class="empty-state-card text-center p-5 card border-0 shadow-sm rounded-4">
+                <i class="bi bi-diagram-3 fs-1 text-primary mb-3"></i>
+                <h2 class="h4">No Service Requests Found</h2>
+                <p class="text-muted mb-3">You have not created any service requests yet. Matches are calculated automatically after you describe your problem.</p>
+                <a href="create_request.php" class="btn btn-primary rounded-pill px-4">Describe Your Problem</a>
+            </div>
+        <?php else: ?>
+
+        <?php if ($allProviders !== []): ?><section class="marketplace-filters card border-0 shadow-sm rounded-4 p-3 p-lg-4 mb-4" aria-labelledby="filterHeading">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                 <div><h2 class="h5 mb-1" id="filterHeading">Find the right provider</h2><p class="small text-muted mb-0"><?= (int)$totalProviders ?> matching provider<?= $totalProviders === 1 ? '' : 's' ?> after filters</p></div>
                 <button class="btn btn-outline-primary d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#marketplaceFilterBody" aria-expanded="false" aria-controls="marketplaceFilterBody">Filters &amp; sort</button>
@@ -83,7 +119,7 @@ require __DIR__ . '/../includes/header.php';
                     <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit">Apply filters</button><a class="btn btn-outline-secondary" href="matches.php?id=<?= (int)$requestId ?>">Clear all</a></div>
                 </form>
             </div>
-        </section>
+        </section><?php endif; ?>
 
         <?php if ($existingBooking): ?>
             <div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 rounded-4 border-0 shadow-sm">
@@ -114,12 +150,20 @@ require __DIR__ . '/../includes/header.php';
         <?php if ($allProviders === []): ?>
             <div class="empty-state-saas">
                 <div class="empty-state-icon"><i class="bi bi-person-x"></i></div>
-                <h3 class="empty-state-title">No Strong Matches Found Yet</h3>
-                <p class="empty-state-desc">
-                    Our matching algorithm requires at least a 40% composite score across category, technical symptoms, and location.
-                    As more providers register and configure services in your area, matches will appear here.
-                </p>
-                <a href="request_details.php?id=<?= (int)$requestId ?>" class="btn btn-outline-primary">Return to Request Details</a>
+                <?php if ($matchingAttributes['category_id'] === null && $clarificationRequired): ?>
+                    <h3 class="empty-state-title"><?= htmlspecialchars($clarificationQuestion !== '' ? $clarificationQuestion : 'Could you clarify the service you need?', ENT_QUOTES, 'UTF-8') ?></h3>
+                    <p class="empty-state-desc">The description does not identify one supported service clearly enough to show providers. Choose the device or update the request details.</p>
+                    <?php if ($clarificationOptions !== []): ?><div class="d-flex flex-wrap justify-content-center gap-2 mb-3"><?php foreach ($clarificationOptions as $option): ?><span class="service-chip"><strong><?= htmlspecialchars((string)$option, ENT_QUOTES, 'UTF-8') ?></strong></span><?php endforeach; ?></div><?php endif; ?>
+                    <a href="edit_request.php?id=<?= (int)$requestId ?>" class="btn btn-primary">Clarify the request</a>
+                <?php elseif ($matchingAttributes['category_id'] === null): ?>
+                    <h3 class="empty-state-title">This service is not currently supported.</h3>
+                    <p class="empty-state-desc">No supported service category could be identified, so ServeIQ has not shown unrelated providers. Review the supported categories or revise your description.</p>
+                    <div class="d-flex flex-wrap justify-content-center gap-2"><a href="../index.php#services" class="btn btn-outline-primary">Explore supported services</a><a href="edit_request.php?id=<?= (int)$requestId ?>" class="btn btn-primary">Update request</a></div>
+                <?php else: ?>
+                    <h3 class="empty-state-title">No strongly relevant provider was found.</h3>
+                    <p class="empty-state-desc">We only show approved, non-offline providers with an active service in <?= htmlspecialchars((string)($request['category_name'] ?? 'the identified category'), ENT_QUOTES, 'UTF-8') ?> in <?= htmlspecialchars((string)$request['city'], ENT_QUOTES, 'UTF-8') ?>. Try broadening the description or changing the service location.</p>
+                    <div class="d-flex flex-wrap justify-content-center gap-2"><a href="edit_request.php?id=<?= (int)$requestId ?>" class="btn btn-primary">Change problem or location</a><a href="request_details.php?id=<?= (int)$requestId ?>" class="btn btn-outline-secondary">Back to request</a></div>
+                <?php endif; ?>
             </div>
         <?php elseif ($filteredProviders === []): ?>
             <div class="empty-state-saas"><div class="empty-state-icon"><i class="bi bi-sliders"></i></div><h3 class="empty-state-title">No providers match these filters</h3><p class="empty-state-desc">Clear one or more filters to see more providers for this request.</p><a href="matches.php?id=<?= (int)$requestId ?>" class="btn btn-primary">Clear filters</a></div>
@@ -275,6 +319,7 @@ require __DIR__ . '/../includes/header.php';
                     <li class="page-item <?= $filters['page'] >= $pageCount ? 'disabled' : '' ?>"><a class="page-link" href="?<?= htmlspecialchars(http_build_query(array_merge($pageParams, ['page' => min($pageCount, $filters['page'] + 1)])), ENT_QUOTES, 'UTF-8') ?>" aria-label="Next page">Next</a></li>
                 </ul></nav>
             <?php endif; ?>
+        <?php endif; ?>
         <?php endif; ?>
     </div>
 </main>

@@ -18,9 +18,9 @@ $workspaceLinks = match ($role) {
         ['Bookings', 'customer/bookings.php', 'bi-calendar-check'],
     ],
     'provider' => [
-        ['Dashboard', 'provider/dashboard.php', 'bi-grid'], ['Services', 'provider/services.php', 'bi-tools'],
+        ['Dashboard', 'provider/dashboard.php', 'bi-grid'], ['Requests', 'provider/requests.php', 'bi-inbox'],
         ['Assessments', 'provider/assessments.php', 'bi-clipboard2-pulse'], ['Bookings', 'provider/bookings.php', 'bi-calendar-check'],
-        ['Profile', 'provider/profile.php', 'bi-person-gear'],
+        ['Services', 'provider/services.php', 'bi-tools'], ['Profile', 'provider/profile.php', 'bi-person-gear'],
     ],
     'admin' => [
         ['Dashboard', 'admin/dashboard.php', 'bi-grid'], ['Users', 'admin/users.php', 'bi-people'],

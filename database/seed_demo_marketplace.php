@@ -9,6 +9,12 @@ if (PHP_SAPI !== 'cli') {
 require __DIR__ . '/../config/database.php';
 require __DIR__ . '/../includes/encryption.php';
 
+$verifiedBackups = glob(__DIR__ . '/backups/*.sql') ?: [];
+$verifiedBackups = array_values(array_filter($verifiedBackups, static fn(string $file): bool => is_file($file) && filesize($file) >= 1_000_000));
+if ($verifiedBackups === []) {
+    throw new RuntimeException('Create and verify a logical database backup in database/backups/ before seeding demo data.');
+}
+
 const DEMO_CUSTOMER_COUNT = 30;
 const DEMO_PROVIDER_COUNT = 230;
 const DEMO_PASSWORD = 'ServeIQDemo#2026';

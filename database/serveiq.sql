@@ -51,11 +51,13 @@ CREATE TABLE provider_profiles (
     profile_image VARCHAR(255) NULL,
     availability_status ENUM('available', 'busy', 'offline') NOT NULL DEFAULT 'available',
     verification_status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',
+    marketplace_active TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_provider_profiles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_provider_city (city),
-    INDEX idx_provider_status (verification_status, availability_status)
+    INDEX idx_provider_status (verification_status, availability_status),
+    INDEX idx_provider_marketplace_status (marketplace_active, verification_status, availability_status)
 ) ENGINE=InnoDB;
 
 CREATE TABLE services (

@@ -35,22 +35,33 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
 {
     $normalized = normalizeServiceDnaText($description);
     $categoryRules = [
-        'Laptop & Computer Repair' => ['laptop', 'notebook', 'computer', 'pc', 'desktop', 'keyboard', 'trackpad'],
-        'Mobile Repair' => ['phone', 'mobile', 'smartphone', 'phone screen', 'mobile screen', 'smartphone screen', 'phone display', 'mobile display', 'smartphone display', 'charging'],
-        'AC Repair' => ['ac', 'air conditioner', 'air conditioning', 'cooling unit', 'air conditioner not cooling'],
-        'Plumbing' => ['pipe', 'tap', 'faucet', 'plumbing', 'leak', 'leaking', 'water leakage'],
-        'Electrical Repair' => ['switch', 'socket', 'wiring', 'electricity', 'power failure', 'fuse', 'electrical fault', 'electrician', 'ceiling fan', 'fan repair'],
-        'CCTV & Security Installation' => ['cctv', 'security camera', 'security system'],
-        'Vehicle Repair' => ['car', 'vehicle', 'bike', 'motorcycle', 'engine', 'brake', 'mechanic'],
-        'Tyre/Puncture Services' => ['car tyre', 'car tire', 'bike tyre', 'bike tire', 'flat tyre', 'flat tire', 'tyre', 'tire', 'puncture'],
-        'Washing Machine Repair' => ['washing machine', 'washer'],
-        'Refrigerator Repair' => ['refrigerator', 'fridge'],
-        'TV Repair' => ['tv', 'television', 'smart tv'],
-        'RO/Water Purifier Service' => ['ro water purifier', 'water purifier', 'ro purifier', 'ro'],
-        'Appliance Repair' => ['microwave', 'appliance', 'kitchen appliance'],
-        'Home Cleaning' => ['cleaning', 'deep clean', 'dust', 'sanitization'],
-        'Internet & WiFi Services' => ['wifi', 'wi fi', 'internet', 'router', 'network', 'connectivity'],
+        'Laptop & Computer Repair' => ['laptop', 'notebook', 'computer', 'pc', 'desktop', 'macbook', 'keyboard', 'trackpad', 'mac', 'windows pc', 'cpu', 'motherboard', 'laptop screen', 'overheating laptop', 'hard drive', 'ssd', 'bsod', 'blue screen'],
+        'Mobile Repair' => ['phone', 'mobile', 'smartphone', 'cell phone', 'cellphone', 'iphone', 'android phone', 'phone screen', 'mobile screen', 'smartphone screen', 'phone display', 'mobile display', 'smartphone display', 'charging', 'android', 'ipad', 'tablet', 'phone screen cracked', 'touchscreen', 'charging port', 'battery drain', 'display replacement'],
+        'AC Repair' => ['ac', 'air con', 'aircon', 'air conditioner', 'air conditioning', 'cooling unit', 'air conditioner not cooling', 'split ac', 'window ac', 'inverter ac', 'ac gas', 'ac cooling', 'ac leakage', 'ac compressor', 'air filter ac'],
+        'Plumbing' => ['pipe', 'tap', 'faucet', 'sink', 'drain', 'plumbing', 'pipe leak', 'tap leak', 'toilet', 'flush', 'flushing', 'washbasin', 'sewage', 'clogged drain', 'pipeline', 'bathroom leak', 'commode', 'water pipe', 'plumber', 'water leakage', 'leak', 'leaking'],
+        'Electrical Repair' => ['switch', 'socket', 'outlet', 'wiring', 'electricity', 'power failure', 'no power', 'fuse', 'circuit breaker', 'electrical fault', 'electrician', 'ceiling fan', 'fan repair', 'short circuit', 'mcb', 'power tripping', 'inverter wiring', 'earthing'],
+        'CCTV & Security Installation' => ['cctv', 'security camera', 'security cameras', 'security cam', 'surveillance camera', 'surveillance system', 'security system', 'cctv installation', 'dvr', 'nvr', 'ip camera', 'dome camera'],
+        'Vehicle Repair' => ['car', 'vehicle', 'bike', 'motorcycle', 'scooter', 'engine', 'brake', 'mechanic', 'car service', 'bike service', 'engine oil', 'clutch', 'gearbox', 'car battery', 'starter motor'],
+        'Tyre/Puncture Services' => ['car tyre', 'car tire', 'bike tyre', 'bike tire', 'flat tyre', 'flat tire', 'tyre', 'tire', 'puncture', 'tubeless puncture', 'wheel alignment', 'wheel balancing', 'tyre rotation', 'tire rotation', 'air pressure', 'stepney', 'tyre burst'],
+        'Washing Machine Repair' => ['washing machine', 'washer', 'laundry machine', 'front load', 'top load', 'spin cycle', 'washer drum', 'washing machine noise'],
+        'Refrigerator Repair' => ['refrigerator', 'fridge', 'freezer', 'double door fridge', 'single door fridge', 'fridge compressor', 'fridge cooling', 'deep freezer'],
+        'TV Repair' => ['tv', 'television', 'smart tv', 'led tv', 'lcd tv', 'oled tv', 'tv screen', 'tv display', 'tv sound', 'hdmi port'],
+        'RO/Water Purifier Service' => ['ro water purifier', 'water purifier', 'water filter purifier', 'purifier', 'ro purifier', 'ro', 'kent ro', 'aquaguard', 'uv purifier', 'tds filter', 'membrane filter', 'water filter'],
+        'Appliance Repair' => ['microwave', 'dishwasher', 'appliance', 'kitchen appliance', 'oven', 'induction', 'air fryer', 'geyser', 'water heater', 'chimney', 'mixer grinder'],
+        'Home Cleaning' => ['home cleaning', 'house cleaning', 'cleaning', 'deep clean', 'deep cleaning', 'cleaner', 'sanitization', 'sofa cleaning', 'bathroom cleaning', 'kitchen cleaning', 'carpet cleaning'],
+        'Internet & WiFi Services' => ['wifi', 'wi fi', 'wireless internet', 'internet', 'broadband', 'router', 'network', 'connectivity', 'fiber optic', 'lan cable', 'modem', 'wifi router', 'slow internet'],
     ];
+    $hasApplianceMention = serviceDnaContains($normalized, 'ac')
+        || serviceDnaContains($normalized, 'air con')
+        || serviceDnaContains($normalized, 'aircon')
+        || serviceDnaContains($normalized, 'air conditioner')
+        || serviceDnaContains($normalized, 'fridge')
+        || serviceDnaContains($normalized, 'refrigerator')
+        || serviceDnaContains($normalized, 'washing machine')
+        || serviceDnaContains($normalized, 'purifier')
+        || serviceDnaContains($normalized, 'water purifier')
+        || serviceDnaContains($normalized, 'ro');
+
     $category = null;
     $categoryMatches = [];
     $bestCategoryMatchScore = 0;
@@ -62,9 +73,24 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
                 $matchesForCategory[] = $keyword;
             }
         }
+        if ($hasApplianceMention && $name === 'Plumbing') {
+            $hasPlumbingFixture = false;
+            foreach (['pipe', 'tap', 'faucet', 'sink', 'drain', 'toilet', 'flush', 'washbasin', 'sewage', 'commode', 'pipeline', 'plumber'] as $pFixture) {
+                if (serviceDnaContains($normalized, $pFixture)) {
+                    $hasPlumbingFixture = true;
+                    break;
+                }
+            }
+            if (!$hasPlumbingFixture) {
+                $matchesForCategory = array_values(array_filter($matchesForCategory, static fn(string $k): bool => !in_array($k, ['leak', 'leaking', 'water leakage'], true)));
+            }
+        }
         $categoryMatchScore = 0;
         foreach ($matchesForCategory as $match) {
             $categoryMatchScore += count(preg_split('/\s+/u', $match));
+            if (in_array($match, ['wifi', 'wi fi', 'internet', 'broadband', 'router', 'security camera', 'washing machine', 'refrigerator', 'water purifier', 'air conditioner', 'car', 'bike', 'laptop', 'mobile', 'microwave', 'ac'], true)) {
+                $categoryMatchScore += 2;
+            }
         }
         if ($categoryMatchScore > $bestCategoryMatchScore) {
             $category = $availableCategory;
@@ -83,17 +109,23 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
     }
 
     $problemRules = [
-        'Overheating' => ['overheat', 'overheating', 'gets hot', 'too hot', 'high temperature'],
-        'Noise' => ['noise', 'noisy', 'loud', 'rattling', 'buzzing'],
-        'Not cooling' => ['not cooling', 'does not cool', 'doesnt cool', 'not getting cold', 'warm air'],
+        'Overheating' => ['overheat', 'overheating', 'overheated', 'runs hot', 'running hot', 'getting hot', 'gets hot', 'too hot', 'very hot', 'temperature rises', 'temperature shoots up', 'high temperature'],
+        'Noise' => ['noise', 'noisy', 'loud', 'strange sound', 'weird sound', 'rattling', 'buzzing'],
+        'Not cooling' => ['not cooling', 'does not cool', 'doesn t cool', 'doesnt cool', 'isn t cooling', 'not cold', 'stays hot', 'room stays hot', 'food is warm', 'not staying cold', 'not getting cold', 'warm air'],
         'Leakage' => ['leak', 'leaking', 'leakage', 'dripping'],
-        'Not starting' => ['not starting', 'wont start', 'does not start', 'doesnt start', 'not turning on'],
+        'Not starting' => ['not starting', 'won t start', 'wont start', 'does not start', 'doesn t start', 'doesnt start', 'trouble starting', 'hard to start', 'not turning on'],
         'Broken or cracked screen' => ['cracked screen', 'broken screen', 'screen cracked', 'screen is cracked', 'display broken'],
         'Slow performance' => ['slow', 'lagging', 'freezing', 'hangs', 'poor performance'],
-        'Battery issue' => ['battery', 'not holding charge', 'drains quickly'],
-        'Network issue' => ['no internet', 'network issue', 'connection drops', 'wifi not working', 'router not working'],
-        'Power failure' => ['power failure', 'no power', 'power cut', 'electrical failure'],
+        'Battery issue' => ['battery', 'not holding charge', 'drains quickly', 'dies quickly', 'dies fast', 'battery dies'],
+        'Network issue' => ['no internet', 'network issue', 'connection drops', 'keeps disconnecting', 'disconnects', 'wifi not working', 'router keeps restarting', 'router not working'],
+        'Power failure' => ['power failure', 'no power', 'room has no power', 'power cut', 'electrical failure', 'socket is sparking', 'outlet is sparking'],
         'Physical damage' => ['dropped', 'drop damage', 'physical damage', 'broken'],
+        'Drainage' => ['not draining', 'wont drain', 'drainage problem', 'water remains inside'],
+        'Vibration' => ['shakes badly', 'shaking', 'vibrates', 'vibration', 'wobbles'],
+        'Tyre pressure loss' => ['losing air', 'keeps losing air', 'air pressure loss', 'loses pressure', 'flat tyre', 'flat tire'],
+        'Display failure' => ['screen stays black', 'black screen', 'no picture', 'no video'],
+        'No water flow' => ['not dispensing water', 'not dispensing', 'no water flow', 'stopped dispensing'],
+        'Camera feed failure' => ['no video feed', 'stopped showing video', 'camera feed is blank'],
     ];
     $problemType = null;
     $problemMatches = [];
@@ -107,17 +139,23 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
     }
 
     $symptomRules = [
-        'overheating' => ['overheat', 'overheating', 'gets hot', 'too hot', 'high temperature'],
-        'loud fan' => ['fan loud', 'loud fan', 'fan noise'],
-        'loud noise' => ['noise', 'noisy', 'loud', 'rattling', 'buzzing'],
+        'overheating' => ['overheat', 'overheating', 'overheated', 'runs hot', 'running hot', 'getting hot', 'gets hot', 'too hot', 'very hot', 'temperature rises', 'temperature shoots up', 'high temperature'],
+        'loud fan' => ['fan loud', 'loud fan', 'fan noise', 'fan becomes loud', 'fan is loud'],
+        'loud noise' => ['noise', 'noisy', 'loud', 'strange sound', 'weird sound', 'rattling', 'buzzing'],
         'automatic shutdown' => ['shuts down', 'shutdown', 'turns off suddenly'],
         'water leakage' => ['water leak', 'water leakage', 'leaking water', 'leaking', 'dripping'],
-        'not cooling' => ['not cooling', 'does not cool', 'not getting cold', 'warm air'],
+        'not cooling' => ['not cooling', 'does not cool', 'isn t cooling', 'not cold', 'stays hot', 'room stays hot', 'not staying cold', 'not getting cold', 'warm air'],
         'cracked screen' => ['cracked screen', 'screen cracked', 'screen is cracked', 'broken screen'],
-        'slow performance' => ['slow', 'lagging', 'freezing', 'hangs'],
-        'charging problem' => ['not charging', 'charging issue', 'does not charge'],
-        'connection drops' => ['connection drops', 'disconnects', 'no internet'],
-        'physical damage' => ['dropped', 'physical damage', 'broken'],
+        'slow performance' => ['slow', 'becomes slow', 'slows down', 'lagging', 'freezing', 'hangs'],
+        'charging problem' => ['not charging', 'charging issue', 'does not charge', 'only charges when', 'charges only when', 'bending cable', 'bend the cable', 'charging cable angle'],
+        'connection drops' => ['connection drops', 'disconnects', 'keeps disconnecting', 'no internet', 'router keeps restarting'],
+        'physical damage' => ['dropped', 'physical damage', 'broken', 'cracked'],
+        'vibration' => ['shakes badly', 'shaking', 'vibrates', 'vibration', 'wobbles'],
+        'tyre pressure loss' => ['losing air', 'keeps losing air', 'air pressure loss', 'loses pressure', 'flat tyre', 'flat tire'],
+        'drainage problem' => ['not draining', 'wont drain', 'drainage problem', 'water remains inside'],
+        'display failure' => ['screen stays black', 'black screen', 'no picture', 'no video'],
+        'no water flow' => ['not dispensing water', 'not dispensing', 'no water flow', 'stopped dispensing'],
+        'camera feed failure' => ['no video feed', 'stopped showing video', 'camera feed is blank'],
     ];
     $symptoms = [];
     $symptomMatches = [];
@@ -141,11 +179,11 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
         'After rain' => ['after rain', 'rain', 'raining'],
         'During charging' => ['charging', 'plugged in'],
         'At night' => ['at night', 'night'],
-        'After long usage' => ['long usage', 'after 30 minutes', 'after prolonged use', 'for hours'],
+        'After long usage' => ['long usage', 'after 20 minutes', 'after 30 minutes', 'after prolonged use', 'for hours', 'after some time'],
         'After installation' => ['after installation', 'installed'],
         'After repair' => ['after repair', 'repaired'],
         'During startup' => ['during startup', 'startup', 'booting'],
-        'During spinning' => ['spinning', 'spin cycle'],
+        'During spinning' => ['spinning', 'spin cycle', 'during spin'],
     ];
     $contexts = [];
     $contextMatches = [];
@@ -160,10 +198,10 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
     }
 
     $entityRules = [
-        'Laptop' => ['laptop', 'notebook'], 'Computer' => ['computer', 'pc', 'desktop'],
+        'Laptop' => ['laptop', 'notebook', 'macbook'], 'Computer' => ['computer', 'pc', 'desktop'],
         'AC' => ['ac', 'air conditioner'], 'Phone' => ['phone', 'mobile', 'smartphone'],
-        'Washing Machine' => ['washing machine'], 'Refrigerator' => ['refrigerator', 'fridge'],
-        'Car' => ['car', 'vehicle'], 'Tap' => ['tap', 'faucet'], 'Pipe' => ['pipe'],
+        'Washing Machine' => ['washing machine', 'washer', 'laundry machine'], 'Refrigerator' => ['refrigerator', 'fridge', 'freezer'],
+        'Car' => ['car', 'vehicle'], 'Tap' => ['tap', 'faucet'], 'Pipe' => ['pipe', 'sink', 'drain'],
         'Electrical switch' => ['switch'], 'Electrical equipment' => ['electrical', 'electrician'], 'Router' => ['router', 'wifi'],
         'Television' => ['tv', 'television'], 'Tyre' => ['tyre', 'tire', 'puncture'],
         'Water purifier' => ['ro', 'water purifier'], 'CCTV camera' => ['cctv', 'security camera'],
@@ -194,10 +232,11 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
     }
 
     $serviceRules = [
-        'Laptop' => ['Laptop Cleaning', 'Cooling System Inspection', 'Fan Inspection', 'Thermal Paste Inspection'],
-        'AC' => ['AC Cooling Inspection', 'Leakage Inspection', 'Filter Cleaning'],
-        'Washing Machine' => ['Washing Machine Inspection', 'Drainage Inspection', 'Leakage Inspection'],
-        'Phone' => ['Screen Replacement Assessment', 'Phone Hardware Inspection'],
+        'Laptop' => ['Laptop Diagnostics', 'Cooling System Inspection', 'Fan Inspection', 'Thermal Service'],
+        'Computer' => ['Computer Diagnostics', 'Hardware Troubleshooting', 'Performance Service'],
+        'AC' => ['AC Cooling Inspection', 'Noise Inspection', 'Leakage Inspection', 'Filter Cleaning'],
+        'Washing Machine' => ['Washing Machine Inspection', 'Drainage Inspection', 'Drum and Vibration Inspection', 'Leakage Inspection'],
+        'Phone' => ['Screen Replacement Assessment', 'Charging Port Inspection', 'Battery Replacement Assessment', 'Phone Hardware Inspection'],
         'Car' => ['Car Tyre Puncture Repair', 'Car Tyre Replacement', 'Wheel Alignment and Balancing', 'Car General Service'],
         'Electrical equipment' => ['Electrical Fault Diagnosis', 'Wiring and Fuse Inspection', 'Switch and Socket Repair'],
         'Television' => ['TV Diagnosis', 'Television Screen Repair', 'TV Power and Display Repair'],
@@ -228,6 +267,22 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
     $confidence += min(10, count($contexts) * 5);
     $confidence += $affectedEntity !== null ? 10 : 0;
 
+    $clarificationRequired = false;
+    $clarificationQuestion = null;
+    $clarificationOptions = [];
+    if ($category === null) {
+        if (serviceDnaContains($normalized, 'machine') || serviceDnaContains($normalized, 'device') || serviceDnaContains($normalized, 'screen') || serviceDnaContains($normalized, 'appliance') || serviceDnaContains($normalized, 'equipment')) {
+            $clarificationRequired = true;
+            $clarificationQuestion = serviceDnaContains($normalized, 'screen')
+                ? 'Which device has the screen problem?'
+                : 'What type of machine or device needs service?';
+            $clarificationOptions = array_values(array_intersect(
+                ['Laptop & Computer Repair', 'Mobile Repair', 'TV Repair', 'Washing Machine Repair', 'Refrigerator Repair', 'Appliance Repair'],
+                array_map(static fn(array $row): string => (string)$row['category_name'], $categories)
+            ));
+        }
+    }
+
     return [
         'category_id' => $category !== null ? (int)$category['id'] : null,
         'category_name' => $category !== null ? (string)$category['category_name'] : null,
@@ -236,9 +291,13 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
         'symptoms' => serviceDnaUnique($symptoms), 'context' => serviceDnaUnique($contexts),
         'urgency' => $userUrgency, 'user_urgency' => $userUrgency, 'detected_urgency' => $detectedUrgency,
         'keywords' => $keywords, 'possible_service_types' => serviceDnaUnique($possibleServices),
-        'location_context' => ['city' => $city, 'area' => $area], 'confidence_score' => min(100, $confidence),
+        'location_context' => ['city' => $city, 'area' => $area], 'confidence_score' => $category !== null ? min(100, $confidence) : 0,
         'analysis_method' => 'rule_based_v1', 'version' => 1, 'evidence' => $evidence,
         'normalized_text' => $normalized,
+        'supported' => $category !== null,
+        'clarification_required' => $clarificationRequired,
+        'clarification_question' => $clarificationQuestion,
+        'clarification_options' => $clarificationOptions,
     ];
 }
 
@@ -311,5 +370,9 @@ function getServiceDnaForRequest(PDO $pdo, int $requestId): ?array
     $dna['disagreement_details'] = is_array($fp['disagreement_details'] ?? null) ? $fp['disagreement_details'] : [];
     $dna['follow_up_questions'] = is_array($fp['follow_up_questions'] ?? null) ? $fp['follow_up_questions'] : [];
     $dna['reasoning_evidence'] = is_array($fp['reasoning_evidence'] ?? null) ? $fp['reasoning_evidence'] : [];
+    $dna['supported'] = (bool)($fp['supported'] ?? !empty($dna['detected_category_id']));
+    $dna['clarification_required'] = (bool)($fp['clarification_required'] ?? false);
+    $dna['clarification_question'] = is_string($fp['clarification_question'] ?? null) ? $fp['clarification_question'] : null;
+    $dna['clarification_options'] = is_array($fp['clarification_options'] ?? null) ? $fp['clarification_options'] : [];
     return $dna;
 }

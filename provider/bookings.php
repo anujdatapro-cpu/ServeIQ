@@ -135,9 +135,14 @@ require __DIR__ . '/../includes/header.php';
                                         </span>
                                     </td>
                                     <td class="text-end">
-                                        <a href="booking_details.php?id=<?= (int)$booking['id'] ?>" class="btn btn-sm btn-outline-primary">
-                                            Manage
-                                        </a>
+                                        <div class="d-inline-flex gap-1">
+                                            <a href="booking_details.php?id=<?= (int)$booking['id'] ?>" class="btn btn-sm btn-outline-primary">
+                                                Manage
+                                            </a>
+                                            <a href="../customer/booking_receipt.php?id=<?= (int)$booking['id'] ?>" class="btn btn-sm btn-outline-success" title="Download PDF Receipt">
+                                                <i class="bi bi-file-earmark-pdf"></i> Receipt
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

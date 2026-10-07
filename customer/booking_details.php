@@ -112,6 +112,7 @@ require __DIR__ . '/../includes/header.php';
                 <p class="text-muted mb-0">Scheduled with <?= htmlspecialchars($booking['business_name'], ENT_QUOTES, 'UTF-8') ?></p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                <a href="booking_receipt.php?id=<?= (int)$booking['id'] ?>" class="btn btn-outline-success"><i class="bi bi-file-earmark-pdf me-1"></i>Download receipt</a>
                 <a href="bookings.php" class="btn btn-outline-secondary">My Bookings</a>
                 <a href="request_details.php?id=<?= (int)$booking['request_id'] ?>" class="btn btn-outline-primary">View Original Request</a>
             </div>

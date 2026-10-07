@@ -181,6 +181,7 @@ require __DIR__ . '/../includes/header.php';
                 <p class="text-muted mb-0">Customer: <?= htmlspecialchars($booking['customer_name'], ENT_QUOTES, 'UTF-8') ?></p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
+                <a href="../customer/booking_receipt.php?id=<?= (int)$booking['id'] ?>" class="btn btn-outline-success"><i class="bi bi-file-earmark-pdf me-1"></i>Download receipt</a>
                 <a href="bookings.php" class="btn btn-outline-secondary">Back to Bookings</a>
                 <a href="dashboard.php" class="btn btn-outline-secondary">Dashboard</a>
             </div>

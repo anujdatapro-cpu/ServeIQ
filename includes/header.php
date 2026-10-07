@@ -19,9 +19,7 @@ $assetVersion = (string) (filemtime(__DIR__ . '/../assets/css/style.css') . '.' 
         (() => {
             let theme = null;
             try { theme = localStorage.getItem('serveiq-theme'); } catch (_) {}
-            if (theme !== 'dark' && theme !== 'light') {
-                theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
+            if (theme !== 'dark' && theme !== 'light') theme = 'dark';
             document.documentElement.dataset.theme = theme;
         })();
     </script>

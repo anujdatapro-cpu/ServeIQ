@@ -56,7 +56,10 @@ try {
             'relevant' => count($relevant), 'top' => $ranked[0]['score'] ?? null,
             'lowest_relevant' => $relevant === [] ? null : end($relevant)['score'],
             'top_provider' => $ranked[0]['business_name'] ?? '-', 'breakdown' => $ranked[0]['breakdown'] ?? [],
-            'passed' => ($dna['category_name'] ?? null) === $expectedCategory && count($relevant) >= 7,
+            'passed' => ($dna['category_name'] ?? null) === $expectedCategory
+                && count($ranked) >= 4
+                && count(array_filter($ranked, static fn(array $provider): bool => matchingNormalize((string)$provider['city']) === 'pune'
+                    && count(array_filter($provider['services'], static fn(array $service): bool => (string)$service['category_name'] === $expectedCategory)) > 0)) === count($ranked),
             'request_id' => $requestId, 'ranked' => $ranked,
         ];
     }

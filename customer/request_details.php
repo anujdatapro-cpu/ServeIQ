@@ -7,6 +7,7 @@ require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/request_helpers.php';
 require __DIR__ . '/../includes/matching_helpers.php';
 require __DIR__ . '/../includes/booking_helpers.php';
+require __DIR__ . '/../includes/review_helpers.php';
 require __DIR__ . '/../includes/adcs_helpers.php';
 require __DIR__ . '/../services/service_dna.php';
 require __DIR__ . '/../config/database.php';
@@ -120,10 +121,23 @@ require __DIR__ . '/../includes/header.php';
                             Scheduled: <strong><?= htmlspecialchars($booking['scheduled_date'] . ' ' . substr((string)$booking['scheduled_time'], 0, 5), ENT_QUOTES, 'UTF-8') ?></strong>
                         </p>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <span class="badge <?= bookingStatusClass($booking['status']) ?> fs-6">
                             <?= htmlspecialchars(bookingStatusLabel($booking['status']), ENT_QUOTES, 'UTF-8') ?>
                         </span>
+                        <a href="booking_receipt.php?id=<?= (int)$booking['id'] ?>" class="btn btn-outline-success">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>Receipt
+                        </a>
+                        <?php if ($booking['status'] === 'completed'): ?>
+                            <?php $bkReview = findReviewForBooking($pdo, (int)$booking['id']); ?>
+                            <?php if (!$bkReview): ?>
+                                <a href="review_booking.php?booking_id=<?= (int)$booking['id'] ?>" class="btn btn-success">
+                                    <i class="bi bi-star-fill me-1"></i>Review
+                                </a>
+                            <?php else: ?>
+                                <span class="badge text-bg-success"><i class="bi bi-patch-check-fill me-1"></i>Reviewed (<?= (int)$bkReview['rating'] ?>★)</span>
+                            <?php endif; ?>
+                        <?php endif; ?>
                         <a href="booking_details.php?id=<?= (int)$booking['id'] ?>" class="btn btn-primary">
                             Manage Booking
                         </a>

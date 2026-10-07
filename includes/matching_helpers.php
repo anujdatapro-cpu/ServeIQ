@@ -100,7 +100,7 @@ function getMatchingRequest(PDO $pdo, int $requestId, ?int $customerId = null): 
     $sql = 'SELECT r.id, r.customer_id, r.category_id, r.title, r.description, r.city, r.area, ' . $locationColumns . ', r.urgency,
                    f.detected_category_id, f.problem_type, f.affected_entity, f.symptoms, f.context,
                    f.keywords, f.possible_service_types, f.location_context, f.confidence_score,
-                   f.user_urgency, f.detected_urgency, f.analysis_method, f.version
+                   f.user_urgency, f.detected_urgency, f.analysis_method, f.version, f.fingerprint_data
             FROM service_requests r
             LEFT JOIN problem_fingerprints f ON f.request_id = r.id
             WHERE r.id = :request_id';
@@ -167,6 +167,8 @@ function getProviderCandidates(PDO $pdo, int $requestId, ?int $customerId = null
         ? 'pp.response_time_minutes, pp.response_time_source'
         : 'NULL AS response_time_minutes, NULL AS response_time_source';
     $servicePriceColumn = matchingTableHasColumns($pdo, 'services', ['base_price']) ? 's.base_price' : 'NULL AS base_price';
+    $marketplaceStatusClause = matchingTableHasColumns($pdo, 'provider_profiles', ['marketplace_active'])
+        ? 'AND pp.marketplace_active = 1' : '';
     $stmt = $pdo->prepare(
         'SELECT pp.id AS provider_id, pp.business_name, pp.profile_image, pp.phone, pp.address, pp.city, pp.area,
                 ' . $providerLocationColumns . ', ' . $responseTimeColumns . ',
@@ -189,6 +191,7 @@ function getProviderCandidates(PDO $pdo, int $requestId, ?int $customerId = null
              FROM bookings WHERE status = \'completed\' GROUP BY provider_id
          ) job_stats ON job_stats.provider_id = pp.id
          WHERE pp.verification_status = \'approved\'
+           ' . $marketplaceStatusClause . '
            AND pp.availability_status <> \'offline\'
          ORDER BY pp.id ASC, s.id ASC'
     );
@@ -323,15 +326,22 @@ function getRankedProvidersForRequest(PDO $pdo, int $requestId, ?int $customerId
 {
     $request = getMatchingRequest($pdo, $requestId, $customerId);
     if (!$request) return [];
-    $expectedCategoryId = matchingRequestAttributes($request)['category_id'];
+    $attributes = matchingRequestAttributes($request);
+    $expectedCategoryId = $attributes['category_id'];
+    // An unclassified request has no defensible provider category. Do not let
+    // location or provider reputation produce a candidate in that case.
+    if ($expectedCategoryId === null || (int)$expectedCategoryId < 1) return [];
+    $expectedCity = matchingNormalize($attributes['city']);
     $ranked = [];
     foreach (getProviderCandidates($pdo, $requestId, $customerId) as $provider) {
         $result = array_merge($provider, calculateProviderMatchScore($request, $provider));
-        // The weighted threshold can otherwise be reached through city and
-        // quality points alone. Keep the existing score and threshold, while
-        // requiring its category factor when ServiceDNA identified a category.
-        $categoryCompatible = $expectedCategoryId === null || $result['breakdown']['category'] > 0;
-        if ($result['score'] >= matchingThreshold() && $categoryCompatible) {
+        $categoryCompatible = $result['breakdown']['category'] > 0;
+        $providerCity = matchingNormalize((string)$provider['city']);
+        $locationCompatible = $expectedCity === '' || $providerCity === $expectedCity;
+        // Relevance is a gate before ranking: the provider needs an active
+        // service relationship to the detected category and a compatible
+        // service location. The existing score weights and threshold remain.
+        if ($result['score'] >= matchingThreshold() && $categoryCompatible && $locationCompatible) {
             $ranked[] = $result;
         }
     }

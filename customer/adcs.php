@@ -9,22 +9,29 @@ require __DIR__ . '/../config/database.php';
 
 requireCustomer();
 
-$requestId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-if (!$requestId || $requestId < 1) {
-    http_response_code(404);
-    exit('Request not found.');
-}
-
 $pdo = getDatabaseConnection();
-$request = findCustomerRequest($pdo, (int)$requestId, (int)getUserId());
-if (!$request) {
-    http_response_code(404);
-    exit('Request not found.');
+$customerId = (int)getUserId();
+$requestId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+
+// Query all customer requests to support direct navigation from workspace dropdown
+$reqListStmt = $pdo->prepare('SELECT id, title, status, created_at FROM service_requests WHERE customer_id = :customer_id ORDER BY created_at DESC');
+$reqListStmt->execute(['customer_id' => $customerId]);
+$customerRequests = $reqListStmt->fetchAll();
+
+if (!$requestId || $requestId < 1) {
+    if (!empty($customerRequests)) {
+        $requestId = (int)$customerRequests[0]['id'];
+    }
 }
 
-$adcs = getADCSForRequest($pdo, (int)$requestId, (int)getUserId());
-if (!$adcs) {
-    $adcs = calculateADCSForRequest($pdo, (int)$requestId);
+$request = $requestId ? findCustomerRequest($pdo, (int)$requestId, $customerId) : null;
+
+$adcs = null;
+if ($requestId && $request) {
+    $adcs = getADCSForRequest($pdo, (int)$requestId, $customerId);
+    if (!$adcs) {
+        $adcs = calculateADCSForRequest($pdo, (int)$requestId);
+    }
 }
 
 function adcsDisplayValues(array $field): string
@@ -58,10 +65,39 @@ require __DIR__ . '/../includes/header.php';
                 <h1 class="mb-1">Multi-Provider Consensus Analysis</h1>
                 <p class="text-muted mb-0">Empirical aggregation of independent preliminary provider assessments.</p>
             </div>
-            <a href="request_details.php?id=<?= (int)$requestId ?>" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>Back to Request
-            </a>
+            <div class="d-flex gap-2 flex-wrap">
+                <?php if ($requestId): ?>
+                    <a href="request_details.php?id=<?= (int)$requestId ?>" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Request
+                    </a>
+                <?php endif; ?>
+                <a href="my_requests.php" class="btn btn-outline-secondary">My Requests</a>
+            </div>
         </div>
+
+        <?php if (!empty($customerRequests) && count($customerRequests) > 1): ?>
+            <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-light">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <label for="requestSwitcher" class="form-label mb-0 small fw-bold text-nowrap"><i class="bi bi-arrow-left-right me-1"></i>Select Request:</label>
+                    <select id="requestSwitcher" class="form-select form-select-sm" style="max-width: 400px;" onchange="window.location.href='adcs.php?id=' + this.value">
+                        <?php foreach ($customerRequests as $cr): ?>
+                            <option value="<?= (int)$cr['id'] ?>" <?= (int)$cr['id'] === $requestId ? 'selected' : '' ?>>
+                                #<?= (int)$cr['id'] ?> - <?= htmlspecialchars(mb_substr($cr['title'], 0, 45), ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars(requestStatusLabel($cr['status']), ENT_QUOTES, 'UTF-8') ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!$request || !$adcs): ?>
+            <div class="empty-state-card text-center p-5 card border-0 shadow-sm rounded-4">
+                <i class="bi bi-clipboard2-pulse fs-1 text-primary mb-3"></i>
+                <h2 class="h4">No Service Requests Found</h2>
+                <p class="text-muted mb-3">You have not created any service requests yet. Multi-provider consensus is aggregated when providers evaluate your service requests.</p>
+                <a href="create_request.php" class="btn btn-primary rounded-pill px-4">Describe Your Problem</a>
+            </div>
+        <?php else: ?>
 
         <!-- Request Reference Card -->
         <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light">
@@ -250,6 +286,7 @@ require __DIR__ . '/../includes/header.php';
                 </div>
             <?php endif; ?>
         </div>
+        <?php endif; ?>
     </div>
 </main>
 
