@@ -10,12 +10,13 @@ $categories = [
     ['id' => 3, 'category_name' => 'AC Repair'],
     ['id' => 4, 'category_name' => 'Plumbing'],
     ['id' => 7, 'category_name' => 'Appliance Repair'],
+    ['id' => 10, 'category_name' => 'Washing Machine Repair'],
 ];
 
 $scenarios = [
     ['text' => 'My laptop is overheating while gaming and the fan is making noise.', 'category' => 1, 'service' => 'Laptop Cooling and Fan Inspection', 'city' => 'Pune', 'expected' => 'Laptop & Computer Repair'],
     ['text' => 'My AC is not cooling and water is leaking.', 'category' => 3, 'service' => 'AC Cooling and Leakage Repair', 'city' => 'Pune', 'expected' => 'AC Repair'],
-    ['text' => 'My washing machine is making loud noise and leaking water.', 'category' => 7, 'service' => 'Washing Machine Leakage and Noise Repair', 'city' => 'Pune', 'expected' => 'Appliance Repair'],
+    ['text' => 'My washing machine is making loud noise and leaking water.', 'category' => 10, 'service' => 'Washing Machine Leakage and Noise Repair', 'city' => 'Pune', 'expected' => 'Washing Machine Repair'],
     ['text' => 'My phone screen is cracked.', 'category' => 2, 'service' => 'Phone Screen Replacement', 'city' => 'Pune', 'expected' => 'Mobile Repair'],
     ['text' => 'My tap is leaking continuously.', 'category' => 4, 'service' => 'Tap Leakage Repair', 'city' => 'Pune', 'expected' => 'Plumbing'],
     ['text' => 'My device has some strange problem.', 'category' => null, 'service' => 'General Services', 'city' => 'Pune', 'expected' => null],

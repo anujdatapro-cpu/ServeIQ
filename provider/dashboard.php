@@ -21,6 +21,8 @@ $providerId = (int)($providerProfile['id'] ?? 0);
 
 $totalServices = 0;
 $activeServices = 0;
+$matchedRequestCount = 0;
+$pendingAssessmentCount = 0;
 if ($providerId > 0) {
     $serviceStatsStmt = $pdo->prepare('SELECT COUNT(*) AS total_services, SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS active_services FROM services WHERE provider_id = :provider_id');
     $serviceStatsStmt->execute(['provider_id' => $providerId]);
@@ -81,6 +83,20 @@ if ($providerId > 0) {
     $recentBookingsStmt->execute(['provider_id' => $providerId]);
     $recentBookings = $recentBookingsStmt->fetchAll();
 
+    $assessmentStatsStmt = $pdo->prepare(
+        "SELECT COUNT(DISTINCT mr.request_id) AS matched_requests,
+                COUNT(DISTINCT CASE WHEN pa.id IS NULL OR pa.status = 'withdrawn' THEN mr.request_id END) AS pending_assessments
+         FROM matching_results mr
+         INNER JOIN service_requests r ON r.id = mr.request_id
+         LEFT JOIN provider_assessments pa ON pa.request_id = mr.request_id AND pa.provider_id = :assessment_provider_id
+         WHERE mr.provider_id = :provider_id AND mr.matching_method = 'weighted_rule_based_v1' AND mr.version = 1
+           AND r.status NOT IN ('cancelled', 'completed')"
+    );
+    $assessmentStatsStmt->execute(['provider_id' => $providerId, 'assessment_provider_id' => $providerId]);
+    $assessmentStats = $assessmentStatsStmt->fetch() ?: [];
+    $matchedRequestCount = (int)($assessmentStats['matched_requests'] ?? 0);
+    $pendingAssessmentCount = (int)($assessmentStats['pending_assessments'] ?? 0);
+
     // Fetch real reputation metrics
     $reputation = getProviderReputation($pdo, $providerId);
 }
@@ -111,12 +127,22 @@ require __DIR__ . '/../includes/header.php';
         </div>
 
         <!-- Booking Operations Metrics -->
+        <h2 class="h5 mt-4 mb-3">Matching &amp; Assessments</h2>
+        <div class="row g-4 mb-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-card"><div class="stat-number"><?= $matchedRequestCount ?></div><div class="stat-label">Eligible Matched Requests</div></div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-card"><div class="stat-number"><?= $pendingAssessmentCount ?></div><div class="stat-label">Awaiting Your Assessment</div></div>
+            </div>
+        </div>
+
         <h2 class="h5 mt-4 mb-3">Booking Operations</h2>
         <div class="row g-4">
             <div class="col-md-6 col-lg-3">
                 <div class="stat-card border-top border-4 border-warning">
                     <div class="stat-number"><?= $bookingStats['pending'] ?></div>
-                    <div class="stat-label">Pending Requests</div>
+                    <div class="stat-label">Pending Bookings</div>
                 </div>
             </div>
             <div class="col-md-6 col-lg-3">

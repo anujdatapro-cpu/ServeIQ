@@ -19,7 +19,7 @@ if (!$providerId || $providerId < 1) {
 
 $pdo = getDatabaseConnection();
 $stmt = $pdo->prepare(
-    'SELECT pp.id, pp.business_name, pp.phone, pp.address, pp.city, pp.area, pp.description,
+    'SELECT pp.id, pp.business_name, pp.profile_image, pp.phone, pp.address, pp.city, pp.area, pp.description,
             pp.experience_years, pp.availability_status, pp.verification_status,
             u.name AS provider_name
      FROM provider_profiles pp
@@ -33,6 +33,11 @@ if (!$provider) {
     http_response_code(404);
     exit('Provider not found.');
 }
+$provider = decryptSensitiveFields($provider, ['phone', 'address']);
+$storedProfileImage = (string)($provider['profile_image'] ?? '');
+$profileImagePath = preg_match('~^uploads/profiles/[A-Za-z0-9_.-]+$~', $storedProfileImage) && is_file(__DIR__ . '/../' . $storedProfileImage)
+    ? '../' . $storedProfileImage
+    : '../assets/images/default-avatar.svg';
 
 // Fetch active services
 $serviceStmt = $pdo->prepare(
@@ -71,10 +76,13 @@ require __DIR__ . '/../includes/header.php';
 <main class="dashboard-page">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-            <div>
-                <span class="section-kicker">Service Provider Profile</span>
-                <h1 class="mb-1"><?= htmlspecialchars($provider['business_name'], ENT_QUOTES, 'UTF-8') ?></h1>
-                <p class="text-muted mb-0"><?= htmlspecialchars($provider['provider_name'], ENT_QUOTES, 'UTF-8') ?></p>
+            <div class="d-flex align-items-center gap-3">
+                <img class="provider-profile-avatar" src="<?= htmlspecialchars($profileImagePath, ENT_QUOTES, 'UTF-8') ?>" alt="" width="76" height="76">
+                <div>
+                    <span class="section-kicker">Service Provider Profile</span>
+                    <h1 class="mb-1"><?= htmlspecialchars($provider['business_name'], ENT_QUOTES, 'UTF-8') ?></h1>
+                    <p class="text-muted mb-0"><?= htmlspecialchars($provider['provider_name'], ENT_QUOTES, 'UTF-8') ?></p>
+                </div>
             </div>
             <div class="d-flex gap-2">
                 <a href="<?= $requestId && $requestId > 0 ? 'matches.php?id=' . (int)$requestId : 'dashboard.php' ?>" class="btn btn-outline-secondary">
@@ -184,7 +192,7 @@ require __DIR__ . '/../includes/header.php';
                                     <div class="d-flex justify-content-between align-items-start gap-2">
                                         <h3 class="h6 mb-1"><?= htmlspecialchars($service['service_name'], ENT_QUOTES, 'UTF-8') ?></h3>
                                         <?php if ($service['base_price'] !== null): ?>
-                                            <span class="badge text-bg-light border">From $<?= htmlspecialchars(number_format((float)$service['base_price'], 2), ENT_QUOTES, 'UTF-8') ?></span>
+                                            <span class="badge text-bg-light border">From ₹<?= htmlspecialchars(number_format((float)$service['base_price'], 2), ENT_QUOTES, 'UTF-8') ?></span>
                                         <?php endif; ?>
                                     </div>
                                     <p class="small text-muted mb-2"><?= htmlspecialchars($service['category_name'], ENT_QUOTES, 'UTF-8') ?></p>

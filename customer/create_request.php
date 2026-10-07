@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 require __DIR__ . '/../includes/session.php';
 require __DIR__ . '/../includes/csrf.php';
+require __DIR__ . '/../includes/validation.php';
+require __DIR__ . '/../includes/audit.php';
 require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/matching_helpers.php';
 require __DIR__ . '/../includes/adcs_helpers.php';
@@ -19,6 +21,8 @@ $form = [
     'category_id' => '',
     'city' => '',
     'area' => '',
+    'latitude' => '',
+    'longitude' => '',
     'address' => '',
     'urgency' => 'medium',
     'contact_preference' => 'email',
@@ -27,8 +31,6 @@ $form = [
 $categoriesStmt = $pdo->query('SELECT id, category_name, description FROM service_categories WHERE is_active = 1 ORDER BY category_name ASC');
 $categories = $categoriesStmt->fetchAll();
 $categoryIds = array_map('intval', array_column($categories, 'id'));
-$allowedUrgencies = ['low', 'medium', 'high', 'emergency'];
-$allowedContacts = ['phone', 'email', 'messaging'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireValidCsrfToken();
@@ -38,35 +40,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'category_id' => trim((string)($_POST['category_id'] ?? '')),
         'city' => trim((string)($_POST['city'] ?? '')),
         'area' => trim((string)($_POST['area'] ?? '')),
+        'latitude' => trim((string)($_POST['latitude'] ?? '')),
+        'longitude' => trim((string)($_POST['longitude'] ?? '')),
         'address' => trim((string)($_POST['address'] ?? '')),
         'urgency' => (string)($_POST['urgency'] ?? 'medium'),
         'contact_preference' => (string)($_POST['contact_preference'] ?? 'email'),
     ];
 
-    if ($form['title'] === '' || mb_strlen($form['title']) > 180) {
-        $errors[] = 'Problem title is required and must be 180 characters or fewer.';
-    }
-    $descriptionLength = mb_strlen($form['description']);
-    if ($descriptionLength < 20 || $descriptionLength > 5000) {
-        $errors[] = 'Detailed description must be between 20 and 5000 characters.';
-    }
+    $errors = array_values(validateServiceRequest($form));
     if ($form['category_id'] !== '' && (!ctype_digit($form['category_id']) || !in_array((int)$form['category_id'], $categoryIds, true))) {
         $errors[] = 'Please choose a valid service category.';
     }
-    if ($form['city'] === '' || mb_strlen($form['city']) > 100) {
-        $errors[] = 'City is required and must be 100 characters or fewer.';
-    }
-    if (mb_strlen($form['area']) > 100) {
-        $errors[] = 'Area / Locality must be 100 characters or fewer.';
-    }
-    if (mb_strlen($form['address']) > 255) {
-        $errors[] = 'Address must be 255 characters or fewer.';
-    }
-    if (!in_array($form['urgency'], $allowedUrgencies, true)) {
-        $errors[] = 'Please choose a valid urgency level.';
-    }
-    if (!in_array($form['contact_preference'], $allowedContacts, true) || $form['contact_preference'] === 'messaging') {
-        $errors[] = 'Please choose phone or email as your contact preference.';
+    $hasLatitude = $form['latitude'] !== '';
+    $hasLongitude = $form['longitude'] !== '';
+    if ($hasLatitude !== $hasLongitude || ($hasLatitude && (!is_numeric($form['latitude']) || !is_numeric($form['longitude']) || (float)$form['latitude'] < -90 || (float)$form['latitude'] > 90 || (float)$form['longitude'] < -180 || (float)$form['longitude'] > 180))) {
+        $errors[] = 'Location coordinates are invalid. Please use the location button again or clear the location.';
     }
 
     $files = $_FILES['images'] ?? null;
@@ -117,8 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
             $requestStmt = $pdo->prepare(
-                'INSERT INTO service_requests (customer_id, category_id, title, description, city, area, address, urgency, contact_preference, status)
-                 VALUES (:customer_id, :category_id, :title, :description, :city, :area, :address, :urgency, :contact_preference, :status)'
+                'INSERT INTO service_requests (customer_id, category_id, title, description, city, area, latitude, longitude, address, urgency, contact_preference, status)
+                 VALUES (:customer_id, :category_id, :title, :description, :city, :area, :latitude, :longitude, :address, :urgency, :contact_preference, :status)'
             );
             $requestStmt->execute([
                 'customer_id' => (int)getUserId(),
@@ -127,7 +115,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'description' => $form['description'],
                 'city' => $form['city'],
                 'area' => $form['area'] === '' ? null : $form['area'],
-                'address' => $form['address'] === '' ? null : $form['address'],
+                'latitude' => $hasLatitude ? (float)$form['latitude'] : null,
+                'longitude' => $hasLongitude ? (float)$form['longitude'] : null,
+                'address' => $form['address'] === '' ? null : encryptSensitiveData($form['address']),
                 'urgency' => $form['urgency'],
                 'contact_preference' => $form['contact_preference'],
                 'status' => 'submitted',
@@ -171,6 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             calculateADCSForRequest($pdo, $requestId);
 
             $pdo->commit();
+            writeAuditLog($pdo, 'request_created', 'service_request', $requestId, null, ['category_id' => $form['category_id'] === '' ? null : (int)$form['category_id'], 'status' => 'submitted']);
             header('Location: request_details.php?id=' . $requestId . '&created=1');
             exit;
         } catch (Throwable $exception) {
@@ -211,13 +202,13 @@ require __DIR__ . '/../includes/header.php';
             </div>
         <?php endif; ?>
 
-        <form method="POST" enctype="multipart/form-data" id="requestForm" novalidate>
+        <form method="POST" enctype="multipart/form-data" id="requestForm">
             <?= csrfField() ?>
             <section class="request-section-card">
                 <div class="request-section-heading"><span class="request-step">01</span><div><h2>Tell us what's wrong</h2><p>Start with the problem in your own words.</p></div></div>
                 <div class="mb-3">
                     <label for="title" class="form-label">Problem Title</label>
-                    <input type="text" id="title" name="title" class="form-control" maxlength="180" value="<?= htmlspecialchars($form['title'], ENT_QUOTES, 'UTF-8') ?>" required>
+                    <input type="text" id="title" name="title" class="form-control" minlength="2" maxlength="180" value="<?= htmlspecialchars($form['title'], ENT_QUOTES, 'UTF-8') ?>" required>
                 </div>
                 <div>
                     <label for="description" class="form-label">Detailed Problem Description</label>
@@ -243,6 +234,7 @@ require __DIR__ . '/../includes/header.php';
                     <div class="col-md-6"><label for="city" class="form-label">City</label><input type="text" id="city" name="city" maxlength="100" class="form-control" value="<?= htmlspecialchars($form['city'], ENT_QUOTES, 'UTF-8') ?>" required></div>
                     <div class="col-md-6"><label for="area" class="form-label">Area / Locality <span class="text-muted">(optional)</span></label><input type="text" id="area" name="area" maxlength="100" class="form-control" value="<?= htmlspecialchars($form['area'], ENT_QUOTES, 'UTF-8') ?>"></div>
                     <div class="col-12"><label for="address" class="form-label">Detailed Address <span class="text-muted">(optional)</span></label><input type="text" id="address" name="address" maxlength="255" class="form-control" value="<?= htmlspecialchars($form['address'], ENT_QUOTES, 'UTF-8') ?>"></div>
+                    <div class="col-12"><button type="button" class="btn btn-outline-primary btn-sm" data-use-location="request">Use my current location</button><span class="small text-muted ms-2" data-location-status>Optional. Coordinates enable distance filtering for this request.</span><input type="hidden" name="latitude" value="<?= htmlspecialchars($form['latitude'], ENT_QUOTES, 'UTF-8') ?>"><input type="hidden" name="longitude" value="<?= htmlspecialchars($form['longitude'], ENT_QUOTES, 'UTF-8') ?>"></div>
                 </div>
             </section>
 

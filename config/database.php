@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/load_environment.php';
+
 function environmentValue(string $name, string $fallback): string
 {
     $value = getenv($name);

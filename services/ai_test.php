@@ -128,6 +128,7 @@ function buildTestPdo(): PDO
             area TEXT NULL,
             experience_years INTEGER NOT NULL DEFAULT 2,
             description TEXT NULL,
+            profile_image TEXT NULL,
             availability_status TEXT NOT NULL DEFAULT 'available',
             verification_status TEXT NOT NULL DEFAULT 'approved',
             average_rating REAL NOT NULL DEFAULT 0,

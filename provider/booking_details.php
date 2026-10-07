@@ -7,6 +7,7 @@ require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/booking_helpers.php';
 require __DIR__ . '/../includes/adcs_helpers.php';
 require __DIR__ . '/../includes/review_helpers.php';
+require __DIR__ . '/../includes/audit.php';
 require __DIR__ . '/../services/service_dna.php';
 require __DIR__ . '/../config/database.php';
 
@@ -116,6 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     default => null,
                 };
                 recordBookingStatus($pdo, $bookingId, (string)$booking['status'], $nextStatus, $userId, $note);
+                writeAuditLog($pdo, 'booking_status_changed', 'booking', $bookingId, ['status' => (string)$booking['status']], ['status' => $nextStatus]);
 
                 // Synchronize service request status with lifecycle
                 if ($nextStatus === 'in_progress') {

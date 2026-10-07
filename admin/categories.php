@@ -4,6 +4,8 @@ declare(strict_types=1);
 require __DIR__ . '/../includes/session.php';
 require __DIR__ . '/../includes/csrf.php';
 require __DIR__ . '/../includes/auth.php';
+require __DIR__ . '/../includes/audit.php';
+require __DIR__ . '/../includes/validation.php';
 require __DIR__ . '/../config/database.php';
 
 requireAdmin();
@@ -48,16 +50,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($categoryId <= 0) {
             $errors[] = 'Invalid category selected for deletion.';
         } else {
-            $usedStmt = $pdo->prepare('SELECT COUNT(*) AS total FROM services WHERE category_id = :category_id');
-            $usedStmt->execute(['category_id' => $categoryId]);
-            $usedCount = (int) $usedStmt->fetch()['total'];
-
-            if ($usedCount > 0) {
-                $errors[] = 'This category is in use by existing services and cannot be deleted.';
+            $deactivateStmt = $pdo->prepare('UPDATE service_categories SET is_active = 0 WHERE id = :id');
+            $deactivateStmt->execute(['id' => $categoryId]);
+            if ($deactivateStmt->rowCount() > 0) {
+                writeAuditLog($pdo, 'category_deactivated', 'service_category', $categoryId, null, ['is_active' => false]);
+                $successMessage = 'Category deactivated. Existing services and requests retain their history.';
             } else {
-                $deleteStmt = $pdo->prepare('DELETE FROM service_categories WHERE id = :id');
-                $deleteStmt->execute(['id' => $categoryId]);
-                $successMessage = 'Category deleted successfully.';
+                $errors[] = 'The selected category was not found or is already inactive.';
             }
         }
     } else {
@@ -67,9 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'is_active' => isset($_POST['is_active']) ? '1' : '0',
         ];
 
-        if ($formData['category_name'] === '') {
-            $errors[] = 'Category name is required.';
-        }
+        $errors = array_values(validateCategoryData($formData));
 
         if (empty($errors)) {
             $categoryId = (int)($_POST['category_id'] ?? 0);
@@ -86,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
+                writeAuditLog($pdo, $categoryId > 0 ? 'category_updated' : 'category_created', 'service_category', $categoryId > 0 ? $categoryId : (int)$pdo->lastInsertId(), null, ['category_name' => $formData['category_name'], 'is_active' => $formData['is_active'] === '1']);
                 $formData = ['category_name' => '', 'description' => '', 'is_active' => '1'];
                 $mode = 'create';
                 $editingCategoryId = null;
@@ -139,7 +137,7 @@ require __DIR__ . '/../includes/header.php';
                 <input type="hidden" name="category_id" value="<?= htmlspecialchars((string)$editingCategoryId, ENT_QUOTES, 'UTF-8') ?>">
                 <div class="col-md-6">
                     <label for="category_name" class="form-label">Category Name</label>
-                    <input type="text" id="category_name" name="category_name" class="form-control" value="<?= htmlspecialchars($formData['category_name'], ENT_QUOTES, 'UTF-8') ?>" required>
+                    <input type="text" id="category_name" name="category_name" class="form-control" maxlength="120" value="<?= htmlspecialchars($formData['category_name'], ENT_QUOTES, 'UTF-8') ?>" required>
                 </div>
                 <div class="col-md-6 d-flex align-items-end">
                     <div class="form-check form-switch mt-4">
@@ -149,7 +147,7 @@ require __DIR__ . '/../includes/header.php';
                 </div>
                 <div class="col-12">
                     <label for="description" class="form-label">Description</label>
-                    <textarea id="description" name="description" class="form-control" rows="4"><?= htmlspecialchars($formData['description'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                    <textarea id="description" name="description" class="form-control" rows="4" maxlength="5000"><?= htmlspecialchars($formData['description'], ENT_QUOTES, 'UTF-8') ?></textarea>
                 </div>
                 <div class="col-12 d-flex justify-content-end gap-2">
                     <?php if ($mode === 'edit'): ?>
@@ -179,11 +177,11 @@ require __DIR__ . '/../includes/header.php';
                                 <p class="text-muted mb-3"><?= htmlspecialchars($category['description'] ?: 'No description provided.', ENT_QUOTES, 'UTF-8') ?></p>
                                 <div class="d-flex gap-2">
                                     <a href="categories.php?edit=<?= (int)$category['id'] ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-                                    <form method="POST" onsubmit="return confirm('Delete this category?');">
+                                        <form method="POST" data-confirm="Deactivate this category? Existing services and request history will remain available.">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="delete_category" value="1">
                                         <input type="hidden" name="category_id" value="<?= (int)$category['id'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" <?= (int)$category['is_active'] === 0 ? 'disabled' : '' ?>>Deactivate</button>
                                     </form>
                                 </div>
                             </div>

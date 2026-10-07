@@ -5,6 +5,8 @@ require __DIR__ . '/../includes/session.php';
 require __DIR__ . '/../includes/csrf.php';
 require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/review_helpers.php';
+require __DIR__ . '/../includes/audit.php';
+require __DIR__ . '/../includes/validation.php';
 require __DIR__ . '/../config/database.php';
 
 requireProvider();
@@ -14,6 +16,9 @@ $pdo = getDatabaseConnection();
 $profile = $pdo->prepare('SELECT * FROM provider_profiles WHERE user_id = :user_id LIMIT 1');
 $profile->execute(['user_id' => $userId]);
 $profileData = $profile->fetch();
+if ($profileData) {
+    $profileData = decryptSensitiveFields($profileData, ['phone', 'address']);
+}
 
 $reputation = [
     'average_rating' => 0.0,
@@ -33,9 +38,12 @@ $formData = [
     'address' => '',
     'city' => '',
     'area' => '',
+    'latitude' => '',
+    'longitude' => '',
     'experience_years' => '1',
     'description' => '',
     'availability_status' => 'available',
+    'response_time_minutes' => '',
 ];
 
 if ($profileData) {
@@ -52,28 +60,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'address' => trim((string)($_POST['address'] ?? '')),
         'city' => trim((string)($_POST['city'] ?? '')),
         'area' => trim((string)($_POST['area'] ?? '')),
+        'latitude' => trim((string)($_POST['latitude'] ?? '')),
+        'longitude' => trim((string)($_POST['longitude'] ?? '')),
         'experience_years' => (int)($_POST['experience_years'] ?? 0),
         'description' => trim((string)($_POST['description'] ?? '')),
-        'availability_status' => in_array((string)($_POST['availability_status'] ?? ''), ['available', 'busy', 'offline'], true) ? (string)$_POST['availability_status'] : 'available',
+        'availability_status' => (string)($_POST['availability_status'] ?? ''),
+        'response_time_minutes' => trim((string)($_POST['response_time_minutes'] ?? '')),
     ];
 
-    if ($formData['business_name'] === '') {
-        $errors[] = 'Business name is required.';
+    $errors = array_values(validateProviderProfile($formData));
+    $hasLatitude = $formData['latitude'] !== '';
+    $hasLongitude = $formData['longitude'] !== '';
+    if ($hasLatitude !== $hasLongitude || ($hasLatitude && (!is_numeric($formData['latitude']) || !is_numeric($formData['longitude']) || (float)$formData['latitude'] < -90 || (float)$formData['latitude'] > 90 || (float)$formData['longitude'] < -180 || (float)$formData['longitude'] > 180))) {
+        $errors[] = 'Location coordinates are invalid. Please use the location button again or clear the location.';
     }
-    if ($formData['phone'] === '') {
-        $errors[] = 'Phone number is required.';
-    }
-    if ($formData['address'] === '') {
-        $errors[] = 'Address is required.';
-    }
-    if ($formData['city'] === '') {
-        $errors[] = 'City is required.';
-    }
-    if ($formData['experience_years'] < 0 || $formData['experience_years'] > 80) {
-        $errors[] = 'Years of experience must be between 0 and 80.';
-    }
-    if (empty($formData['availability_status'])) {
-        $errors[] = 'Availability status is required.';
+    if ($formData['response_time_minutes'] !== '' && (!ctype_digit($formData['response_time_minutes']) || (int)$formData['response_time_minutes'] < 1 || (int)$formData['response_time_minutes'] > 1440)) {
+        $errors[] = 'Estimated response time must be between 1 and 1440 minutes.';
     }
 
     $uploadedImage = null;
@@ -122,18 +124,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 default => '.jpg',
             };
 
-            $newName = 'profile_' . uniqid('', true) . $extension;
+            $newName = 'profile_' . bin2hex(random_bytes(16)) . $extension;
             $targetPath = $uploadDir . $newName;
 
             if (!move_uploaded_file($uploadedImage['tmp_name'], $targetPath)) {
                 $errors[] = 'The image could not be saved. Please try again.';
             } else {
                 $imagePath = 'uploads/profiles/' . $newName;
+                $newImageToClean = $targetPath;
                 if (!empty($profileData['profile_image']) && $profileData['profile_image'] !== $imagePath) {
-                    $oldFile = __DIR__ . '/../' . $profileData['profile_image'];
-                    if (file_exists($oldFile)) {
-                        unlink($oldFile);
-                    }
+                    $oldImageToDelete = __DIR__ . '/../' . $profileData['profile_image'];
                 }
             }
         }
@@ -148,46 +148,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             address = :address,
                             city = :city,
                             area = :area,
+                            latitude = :latitude,
+                            longitude = :longitude,
+                            location_source = :location_source,
                             experience_years = :experience_years,
                             description = :description,
                             availability_status = :availability_status,
+                            response_time_minutes = :response_time_minutes,
+                            response_time_source = :response_time_source,
                             profile_image = :profile_image
                         WHERE user_id = :user_id';
                 $params = [
                     'business_name' => $formData['business_name'],
-                    'phone' => $formData['phone'],
-                    'address' => $formData['address'],
+                    'phone' => encryptSensitiveData($formData['phone']),
+                    'address' => encryptSensitiveData($formData['address']),
                     'city' => $formData['city'],
                     'area' => $formData['area'],
+                    'latitude' => $hasLatitude ? (float)$formData['latitude'] : null,
+                    'longitude' => $hasLongitude ? (float)$formData['longitude'] : null,
+                    'location_source' => $hasLatitude ? 'provider_location' : null,
                     'experience_years' => $formData['experience_years'],
                     'description' => $formData['description'],
                     'availability_status' => $formData['availability_status'],
+                    'response_time_minutes' => $formData['response_time_minutes'] === '' ? null : (int)$formData['response_time_minutes'],
+                    'response_time_source' => $formData['response_time_minutes'] === '' ? null : 'provider_estimate',
                     'profile_image' => $imagePath ?? ($profileData['profile_image'] ?? null),
                     'user_id' => $userId,
                 ];
             } else {
-                $sql = 'INSERT INTO provider_profiles (user_id, business_name, phone, address, city, area, experience_years, description, availability_status, profile_image)
-                        VALUES (:user_id, :business_name, :phone, :address, :city, :area, :experience_years, :description, :availability_status, :profile_image)';
+                $sql = 'INSERT INTO provider_profiles (user_id, business_name, phone, address, city, area, latitude, longitude, location_source, experience_years, description, availability_status, response_time_minutes, response_time_source, profile_image)
+                        VALUES (:user_id, :business_name, :phone, :address, :city, :area, :latitude, :longitude, :location_source, :experience_years, :description, :availability_status, :response_time_minutes, :response_time_source, :profile_image)';
                 $params = [
                     'user_id' => $userId,
                     'business_name' => $formData['business_name'],
-                    'phone' => $formData['phone'],
-                    'address' => $formData['address'],
+                    'phone' => encryptSensitiveData($formData['phone']),
+                    'address' => encryptSensitiveData($formData['address']),
                     'city' => $formData['city'],
                     'area' => $formData['area'],
+                    'latitude' => $hasLatitude ? (float)$formData['latitude'] : null,
+                    'longitude' => $hasLongitude ? (float)$formData['longitude'] : null,
+                    'location_source' => $hasLatitude ? 'provider_location' : null,
                     'experience_years' => $formData['experience_years'],
                     'description' => $formData['description'],
                     'availability_status' => $formData['availability_status'],
+                    'response_time_minutes' => $formData['response_time_minutes'] === '' ? null : (int)$formData['response_time_minutes'],
+                    'response_time_source' => $formData['response_time_minutes'] === '' ? null : 'provider_estimate',
                     'profile_image' => $imagePath ?? null,
                 ];
             }
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
+            $profileAuditId = $profileData ? (int)$profileData['id'] : (int)$pdo->lastInsertId();
+            writeAuditLog($pdo, $profileData ? 'provider_profile_updated' : 'provider_profile_created', 'provider_profile', $profileAuditId, null, ['fields' => array_keys($formData)]);
+            if (isset($oldImageToDelete) && is_file($oldImageToDelete)) {
+                unlink($oldImageToDelete);
+            }
             $successMessage = $profileData ? 'Business profile updated successfully.' : 'Business profile created successfully.';
             $profileData = $pdo->prepare('SELECT * FROM provider_profiles WHERE user_id = :user_id LIMIT 1');
             $profileData->execute(['user_id' => $userId]);
             $profileData = $profileData->fetch();
+            if ($profileData) {
+                $profileData = decryptSensitiveFields($profileData, ['phone', 'address']);
+            }
             foreach ($formData as $key => $value) {
                 $formData[$key] = $profileData[$key] ?? $value;
             }
@@ -195,6 +218,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $reputation = getProviderReputation($pdo, (int)$profileData['id']);
             }
         } catch (Exception $e) {
+            if (isset($newImageToClean) && is_file($newImageToClean)) {
+                unlink($newImageToClean);
+            }
             $errors[] = 'Unable to save your profile at the moment. Please retry.';
             error_log($e->getMessage());
         }
@@ -279,7 +305,7 @@ require __DIR__ . '/../includes/header.php';
                         </div>
                         <div class="col-md-6">
                             <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($formData['phone'], ENT_QUOTES, 'UTF-8') ?>" required>
+                            <input type="tel" id="phone" name="phone" class="form-control" inputmode="numeric" pattern="[6-9][0-9]{9}" minlength="10" maxlength="10" title="Enter a 10-digit Indian mobile number" value="<?= htmlspecialchars($formData['phone'], ENT_QUOTES, 'UTF-8') ?>" required>
                         </div>
                         <div class="col-12">
                             <label for="address" class="form-label">Address</label>
@@ -293,6 +319,8 @@ require __DIR__ . '/../includes/header.php';
                             <label for="area" class="form-label">Area / Locality</label>
                             <input type="text" id="area" name="area" class="form-control" value="<?= htmlspecialchars($formData['area'], ENT_QUOTES, 'UTF-8') ?>">
                         </div>
+                        <div class="col-12"><button type="button" class="btn btn-outline-primary btn-sm" data-use-location="provider">Use my current location</button><span class="small text-muted ms-2" data-location-status>Optional. Coordinates enable distance sorting and filters.</span><input type="hidden" name="latitude" value="<?= htmlspecialchars((string)$formData['latitude'], ENT_QUOTES, 'UTF-8') ?>"><input type="hidden" name="longitude" value="<?= htmlspecialchars((string)$formData['longitude'], ENT_QUOTES, 'UTF-8') ?>"></div>
+                        <div class="col-md-6"><label for="response_time_minutes" class="form-label">Estimated Response Time (minutes)</label><input type="number" id="response_time_minutes" name="response_time_minutes" min="1" max="1440" class="form-control" value="<?= htmlspecialchars((string)$formData['response_time_minutes'], ENT_QUOTES, 'UTF-8') ?>"><small class="text-muted">Provider estimate, not a measured response-time guarantee.</small></div>
                         <div class="col-md-6">
                             <label for="experience_years" class="form-label">Years of Experience</label>
                             <input type="number" id="experience_years" name="experience_years" min="0" max="80" class="form-control" value="<?= htmlspecialchars((string)$formData['experience_years'], ENT_QUOTES, 'UTF-8') ?>" required>

@@ -36,12 +36,18 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
     $normalized = normalizeServiceDnaText($description);
     $categoryRules = [
         'Laptop & Computer Repair' => ['laptop', 'notebook', 'computer', 'pc', 'desktop', 'keyboard', 'trackpad'],
-        'Mobile Repair' => ['phone', 'mobile', 'smartphone', 'screen', 'charging'],
-        'AC Repair' => ['ac', 'air conditioner', 'air conditioning', 'cooling unit'],
+        'Mobile Repair' => ['phone', 'mobile', 'smartphone', 'phone screen', 'mobile screen', 'smartphone screen', 'phone display', 'mobile display', 'smartphone display', 'charging'],
+        'AC Repair' => ['ac', 'air conditioner', 'air conditioning', 'cooling unit', 'air conditioner not cooling'],
         'Plumbing' => ['pipe', 'tap', 'faucet', 'plumbing', 'leak', 'leaking', 'water leakage'],
-        'Electrical Repair' => ['switch', 'socket', 'wiring', 'electricity', 'power failure', 'fuse'],
-        'Vehicle Repair' => ['car', 'vehicle', 'bike', 'motorcycle', 'engine', 'brake'],
-        'Appliance Repair' => ['washing machine', 'refrigerator', 'fridge', 'microwave', 'appliance'],
+        'Electrical Repair' => ['switch', 'socket', 'wiring', 'electricity', 'power failure', 'fuse', 'electrical fault', 'electrician', 'ceiling fan', 'fan repair'],
+        'CCTV & Security Installation' => ['cctv', 'security camera', 'security system'],
+        'Vehicle Repair' => ['car', 'vehicle', 'bike', 'motorcycle', 'engine', 'brake', 'mechanic'],
+        'Tyre/Puncture Services' => ['car tyre', 'car tire', 'bike tyre', 'bike tire', 'flat tyre', 'flat tire', 'tyre', 'tire', 'puncture'],
+        'Washing Machine Repair' => ['washing machine', 'washer'],
+        'Refrigerator Repair' => ['refrigerator', 'fridge'],
+        'TV Repair' => ['tv', 'television', 'smart tv'],
+        'RO/Water Purifier Service' => ['ro water purifier', 'water purifier', 'ro purifier', 'ro'],
+        'Appliance Repair' => ['microwave', 'appliance', 'kitchen appliance'],
         'Home Cleaning' => ['cleaning', 'deep clean', 'dust', 'sanitization'],
         'Internet & WiFi Services' => ['wifi', 'wi fi', 'internet', 'router', 'network', 'connectivity'],
     ];
@@ -85,7 +91,7 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
         'Broken or cracked screen' => ['cracked screen', 'broken screen', 'screen cracked', 'screen is cracked', 'display broken'],
         'Slow performance' => ['slow', 'lagging', 'freezing', 'hangs', 'poor performance'],
         'Battery issue' => ['battery', 'not holding charge', 'drains quickly'],
-        'Network issue' => ['no internet', 'network issue', 'connection drops', 'wifi not working'],
+        'Network issue' => ['no internet', 'network issue', 'connection drops', 'wifi not working', 'router not working'],
         'Power failure' => ['power failure', 'no power', 'power cut', 'electrical failure'],
         'Physical damage' => ['dropped', 'drop damage', 'physical damage', 'broken'],
     ];
@@ -158,7 +164,9 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
         'AC' => ['ac', 'air conditioner'], 'Phone' => ['phone', 'mobile', 'smartphone'],
         'Washing Machine' => ['washing machine'], 'Refrigerator' => ['refrigerator', 'fridge'],
         'Car' => ['car', 'vehicle'], 'Tap' => ['tap', 'faucet'], 'Pipe' => ['pipe'],
-        'Electrical switch' => ['switch'], 'Router' => ['router'],
+        'Electrical switch' => ['switch'], 'Electrical equipment' => ['electrical', 'electrician'], 'Router' => ['router', 'wifi'],
+        'Television' => ['tv', 'television'], 'Tyre' => ['tyre', 'tire', 'puncture'],
+        'Water purifier' => ['ro', 'water purifier'], 'CCTV camera' => ['cctv', 'security camera'],
     ];
     $affectedEntity = null;
     $entityMatches = [];
@@ -190,6 +198,15 @@ function analyzeServiceDnaFromCategories(string $description, ?string $selectedC
         'AC' => ['AC Cooling Inspection', 'Leakage Inspection', 'Filter Cleaning'],
         'Washing Machine' => ['Washing Machine Inspection', 'Drainage Inspection', 'Leakage Inspection'],
         'Phone' => ['Screen Replacement Assessment', 'Phone Hardware Inspection'],
+        'Car' => ['Car Tyre Puncture Repair', 'Car Tyre Replacement', 'Wheel Alignment and Balancing', 'Car General Service'],
+        'Electrical equipment' => ['Electrical Fault Diagnosis', 'Wiring and Fuse Inspection', 'Switch and Socket Repair'],
+        'Television' => ['TV Diagnosis', 'Television Screen Repair', 'TV Power and Display Repair'],
+        'Tyre' => ['Tyre Puncture Repair', 'Car Tyre Replacement', 'Wheel and Tyre Inspection'],
+        'Router' => ['WiFi Router Diagnosis', 'Router Configuration', 'Home Network Troubleshooting'],
+        'Water purifier' => ['RO Water Purifier Service', 'Water Filter Replacement', 'Purifier Leakage Diagnosis'],
+        'CCTV camera' => ['CCTV Installation', 'Security Camera Repair', 'CCTV Wiring and Configuration'],
+        'Washing Machine' => ['Washing Machine Not Starting Repair', 'Washing Machine Leakage Repair', 'Drum Noise Diagnosis'],
+        'Refrigerator' => ['Refrigerator Cooling Repair', 'Fridge Compressor Diagnosis', 'Refrigerator Thermostat Repair'],
         'Tap' => ['Tap Repair', 'Leakage Inspection'],
         'Pipe' => ['Pipe Repair', 'Leakage Inspection'],
     ];

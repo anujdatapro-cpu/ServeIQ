@@ -6,6 +6,7 @@ require __DIR__ . '/../includes/csrf.php';
 require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/matching_helpers.php';
 require __DIR__ . '/../includes/adcs_helpers.php';
+require __DIR__ . '/../includes/audit.php';
 require __DIR__ . '/../config/database.php';
 
 requireCustomer();
@@ -20,6 +21,9 @@ if (!$requestId || $requestId < 1) {
 $pdo = getDatabaseConnection();
 try {
     $pdo->beginTransaction();
+    $oldStatusStmt = $pdo->prepare('SELECT status FROM service_requests WHERE id = :request_id AND customer_id = :customer_id FOR UPDATE');
+    $oldStatusStmt->execute(['request_id' => $requestId, 'customer_id' => (int)getUserId()]);
+    $oldStatus = $oldStatusStmt->fetchColumn();
     $stmt = $pdo->prepare("UPDATE service_requests SET status = 'cancelled' WHERE id = :request_id AND customer_id = :customer_id AND status NOT IN ('completed', 'cancelled')");
     $stmt->execute(['request_id' => $requestId, 'customer_id' => (int)getUserId()]);
     if ($stmt->rowCount() !== 1) {
@@ -31,6 +35,7 @@ try {
     invalidateADCSAssessmentsForRequest($pdo, $requestId);
     calculateADCSForRequest($pdo, $requestId);
     $pdo->commit();
+    writeAuditLog($pdo, 'request_cancelled', 'service_request', (int)$requestId, ['status' => $oldStatus], ['status' => 'cancelled']);
 } catch (Throwable $exception) {
     if ($pdo->inTransaction()) $pdo->rollBack();
     error_log($exception->getMessage());

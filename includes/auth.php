@@ -6,17 +6,22 @@ declare(strict_types=1);
 
 function isLoggedIn(): bool
 {
-    return !empty($_SESSION['user_id']);
+    $userId = filter_var($_SESSION['user_id'] ?? null, FILTER_VALIDATE_INT);
+    $role = $_SESSION['user_role'] ?? null;
+    return $userId !== false && $userId !== null && $userId > 0
+        && is_string($role) && in_array($role, ['customer', 'provider', 'admin'], true);
 }
 
 function getUserRole(): ?string
 {
-    return $_SESSION['user_role'] ?? null;
+    $role = $_SESSION['user_role'] ?? null;
+    return is_string($role) && in_array($role, ['customer', 'provider', 'admin'], true) ? $role : null;
 }
 
 function getUserId(): ?int
 {
-    return $_SESSION['user_id'] ?? null;
+    $userId = filter_var($_SESSION['user_id'] ?? null, FILTER_VALIDATE_INT);
+    return $userId !== false && $userId !== null && $userId > 0 ? $userId : null;
 }
 
 function applicationBasePath(): string
@@ -69,6 +74,12 @@ function requireAdmin(): void
 
 function logout(): void
 {
-    $_SESSION = [];
-    session_destroy();
+    if (function_exists('writeAuditLog') && !empty($_SESSION['user_id'])) {
+        try {
+            writeAuditLog(getDatabaseConnection(), 'logout', 'user', (int)$_SESSION['user_id']);
+        } catch (Throwable $e) {
+            error_log('ServeIQ audit logging failed: ' . $e->getMessage());
+        }
+    }
+    destroySession();
 }

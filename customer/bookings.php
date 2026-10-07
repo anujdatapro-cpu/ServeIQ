@@ -41,6 +41,7 @@ $sql = 'SELECT b.id, b.status, b.scheduled_date, b.scheduled_time, b.created_at,
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $bookings = $stmt->fetchAll();
+$bookings = array_map(static fn(array $booking): array => decryptSensitiveFields($booking, ['provider_phone']), $bookings);
 
 $pageTitle = 'My Bookings | ServeIQ';
 $basePath = '../';

@@ -5,6 +5,8 @@ require __DIR__ . '/../includes/session.php';
 require __DIR__ . '/../includes/csrf.php';
 require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/review_helpers.php';
+require __DIR__ . '/../includes/audit.php';
+require __DIR__ . '/../includes/validation.php';
 require __DIR__ . '/../config/database.php';
 
 requireAdmin();
@@ -34,11 +36,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$reviewId || !in_array($action, ['publish', 'hide'], true)) {
         $error = 'Invalid moderation action.';
+    } elseif (!validateModerationNote($note)) {
+        $error = 'Moderation note cannot exceed 2000 characters.';
     } elseif (!$hasStatusCol) {
         $error = 'Review status column is not present. Run database/phase9_reviews.sql to enable moderation.';
     } else {
         $newStatus = $action === 'hide' ? 'hidden' : 'published';
         try {
+            $oldStmt = $pdo->prepare('SELECT status FROM reviews WHERE id = :id LIMIT 1');
+            $oldStmt->execute(['id' => $reviewId]);
+            $oldStatus = $oldStmt->fetchColumn();
             $stmt = $pdo->prepare(
                 'UPDATE reviews 
                  SET status = :status, 
@@ -53,7 +60,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'moderator' => $adminId,
                 'id' => $reviewId,
             ]);
-            $message = 'Review #' . $reviewId . ' status updated to ' . $newStatus . '.';
+            if ($oldStatus !== false) {
+                writeAuditLog($pdo, 'review_moderated', 'review', (int)$reviewId, ['status' => $oldStatus], ['status' => $newStatus, 'moderation_note_set' => $note !== '']);
+                $message = 'Review #' . $reviewId . ' status updated to ' . $newStatus . '.';
+            } else {
+                $error = 'The selected review was not found.';
+            }
         } catch (Throwable $e) {
             error_log($e->getMessage());
             $error = 'Failed to update review status.';
@@ -204,6 +216,8 @@ require __DIR__ . '/../includes/header.php';
                                             <form method="POST" action="reviews.php" class="d-inline">
                                                 <?= csrfField() ?>
                                                 <input type="hidden" name="review_id" value="<?= (int)$rev['id'] ?>">
+                                                <label class="visually-hidden" for="moderation-note-<?= (int)$rev['id'] ?>">Optional moderation note</label>
+                                                <input id="moderation-note-<?= (int)$rev['id'] ?>" type="text" name="moderation_note" class="form-control form-control-sm mb-2" maxlength="2000" placeholder="Optional note">
                                                 <?php if ($rev['status'] === 'hidden'): ?>
                                                     <input type="hidden" name="action" value="publish">
                                                     <button type="submit" class="btn btn-sm btn-outline-success">

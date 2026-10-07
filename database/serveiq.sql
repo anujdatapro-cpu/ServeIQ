@@ -263,13 +263,20 @@ CREATE TABLE reviews (
     provider_id INT UNSIGNED NOT NULL,
     rating TINYINT UNSIGNED NOT NULL,
     review TEXT NULL,
+    status ENUM('published', 'hidden') NOT NULL DEFAULT 'published',
+    moderation_note VARCHAR(500) NULL,
+    moderated_by INT UNSIGNED NULL,
+    moderated_at TIMESTAMP NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT chk_reviews_rating CHECK (rating BETWEEN 1 AND 5),
     CONSTRAINT fk_reviews_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
     CONSTRAINT fk_reviews_customer FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_reviews_provider FOREIGN KEY (provider_id) REFERENCES provider_profiles(id) ON DELETE CASCADE,
-    INDEX idx_reviews_provider (provider_id)
+    CONSTRAINT fk_reviews_moderator FOREIGN KEY (moderated_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_reviews_provider (provider_id),
+    INDEX idx_reviews_customer (customer_id),
+    INDEX idx_reviews_status_provider (provider_id, status)
 ) ENGINE=InnoDB;
 
 INSERT INTO service_categories (category_name, description) VALUES

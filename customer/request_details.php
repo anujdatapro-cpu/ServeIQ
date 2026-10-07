@@ -36,6 +36,19 @@ $images = $imageStmt->fetchAll();
 $created = isset($_GET['created']);
 
 $canBook = !$booking && !in_array($request['status'], ['cancelled', 'completed'], true);
+$requestCancelled = $request['status'] === 'cancelled';
+$requestCompleted = $request['status'] === 'completed' || (($booking['status'] ?? '') === 'completed');
+$requestWorkflow = [
+    ['label' => 'Request received', 'complete' => true],
+    ['label' => 'ServiceDNA analysis', 'complete' => $serviceDna !== null],
+    ['label' => 'Provider matching', 'complete' => $rankedProviders !== []],
+    ['label' => 'Booking created', 'complete' => $booking !== null],
+    ['label' => 'Service completed', 'complete' => $requestCompleted],
+];
+$currentWorkflowStep = null;
+foreach ($requestWorkflow as $stepIndex => $step) {
+    if (!$step['complete']) { $currentWorkflowStep = $stepIndex; break; }
+}
 
 $pageTitle = 'Request Details | ServeIQ';
 $basePath = '../';
@@ -66,6 +79,24 @@ require __DIR__ . '/../includes/header.php';
                 <a href="dashboard.php" class="btn btn-outline-secondary">Dashboard</a>
             </div>
         </div>
+
+        <section class="card request-progress-card border-0 p-4 p-md-5 mb-4" aria-labelledby="request-progress-heading">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+                <div><span class="section-kicker">Service journey</span><h2 id="request-progress-heading" class="h4 mb-1">Request progress</h2><p class="text-muted mb-0">Milestones reflect saved information and workflow status.</p></div>
+                <?php if ($requestCancelled): ?><span class="badge text-bg-danger">Cancelled</span><?php elseif ($requestCompleted): ?><span class="badge text-bg-success">Completed</span><?php endif; ?>
+            </div>
+            <?php if ($requestCancelled): ?><p class="alert alert-warning mb-3">This request was cancelled. Its saved history remains available.</p><?php endif; ?>
+            <ol class="request-timeline">
+                <?php foreach ($requestWorkflow as $stepIndex => $step): ?>
+                    <?php $stepState = $step['complete'] ? 'complete' : ($stepIndex === $currentWorkflowStep && !$requestCancelled ? 'current' : 'pending'); ?>
+                    <li class="request-timeline-step <?= $stepState ?> <?= $requestCancelled && !$step['complete'] ? 'halted' : '' ?>">
+                        <span class="request-timeline-marker" aria-hidden="true"><?= $step['complete'] ? '<i class="bi bi-check2"></i>' : sprintf('%02d', $stepIndex + 1) ?></span>
+                        <span class="request-timeline-label"><?= htmlspecialchars($step['label'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <span class="request-timeline-state"><?= $step['complete'] ? 'Recorded' : ($stepState === 'current' ? 'Next step' : ($requestCancelled ? 'Stopped' : 'Not yet')) ?></span>
+                    </li>
+                <?php endforeach; ?>
+            </ol>
+        </section>
 
         <?php if ($created): ?>
             <div class="alert alert-success">Your problem request was submitted successfully.</div>
@@ -144,7 +175,7 @@ require __DIR__ . '/../includes/header.php';
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <?php if (!empty($serviceDna['ai_used'])): ?>
                             <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
-                                <i class="bi bi-cpu me-1"></i>AI Enhanced
+                                <i class="bi bi-cpu me-1"></i>Enhancement layer active
                             </span>
                         <?php else: ?>
                             <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small">
@@ -255,8 +286,8 @@ require __DIR__ . '/../includes/header.php';
                 <div class="row g-3">
                     <?php foreach ($images as $image): ?>
                         <div class="col-6 col-md-4 col-lg-3">
-                            <a href="../uploads/requests/<?= rawurlencode(basename($image['stored_name'])) ?>" target="_blank" rel="noopener">
-                                <img src="../uploads/requests/<?= rawurlencode(basename($image['stored_name'])) ?>" alt="<?= htmlspecialchars($image['original_name'], ENT_QUOTES, 'UTF-8') ?>" class="img-fluid rounded-3 border request-image">
+                            <a href="../request_image.php?id=<?= (int)$image['id'] ?>" target="_blank" rel="noopener">
+                                <img src="../request_image.php?id=<?= (int)$image['id'] ?>" alt="<?= htmlspecialchars($image['original_name'], ENT_QUOTES, 'UTF-8') ?>" class="img-fluid rounded-3 border request-image">
                             </a>
                         </div>
                     <?php endforeach; ?>

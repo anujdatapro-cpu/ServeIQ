@@ -6,6 +6,8 @@ require __DIR__ . '/../includes/csrf.php';
 require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/booking_helpers.php';
 require __DIR__ . '/../includes/review_helpers.php';
+require __DIR__ . '/../includes/validation.php';
+require __DIR__ . '/../includes/audit.php';
 require __DIR__ . '/../config/database.php';
 
 requireCustomer();
@@ -43,17 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $submittedRating = filter_input(INPUT_POST, 'rating', FILTER_VALIDATE_INT);
     $submittedReview = trim((string)($_POST['review'] ?? ''));
 
-    if (!$submittedRating || $submittedRating < 1 || $submittedRating > 5) {
-        $errors[] = 'Please select a valid rating from 1 to 5 stars.';
-    }
-
-    if (mb_strlen($submittedReview) > 2000) {
-        $errors[] = 'Your written review cannot exceed 2000 characters.';
-    }
+    $errors = array_values(validateReviewData($_POST['rating'] ?? null, $submittedReview));
 
     if (empty($errors)) {
         try {
-            createBookingReview($pdo, $bookingId, $customerId, $submittedRating, $submittedReview);
+            $reviewId = createBookingReview($pdo, $bookingId, $customerId, $submittedRating, $submittedReview);
+            writeAuditLog($pdo, 'review_created', 'review', $reviewId, null, ['booking_id' => $bookingId, 'rating' => $submittedRating]);
             header('Location: booking_details.php?id=' . $bookingId . '&reviewed=1');
             exit;
         } catch (Throwable $e) {

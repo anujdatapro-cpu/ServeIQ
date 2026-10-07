@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/encryption.php';
+
 function matchingWeights(): array
 {
     return [
@@ -41,6 +43,25 @@ function matchingDecodeJson(mixed $value): array
     return is_array($decoded) ? $decoded : [];
 }
 
+function matchingTableHasColumns(PDO $pdo, string $table, array $wanted): bool
+{
+    static $cache = [];
+    if (!preg_match('/^[a-z_]+$/i', $table)) return false;
+    $key = spl_object_id($pdo) . ':' . $table;
+    if (!isset($cache[$key])) {
+        try {
+            if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite') {
+                $cache[$key] = array_column($pdo->query('PRAGMA table_info(`' . $table . '`)')->fetchAll(), 'name');
+            } else {
+                $cache[$key] = array_column($pdo->query('SHOW COLUMNS FROM `' . $table . '`')->fetchAll(), 'Field');
+            }
+        } catch (Throwable) {
+            $cache[$key] = [];
+        }
+    }
+    return array_diff($wanted, $cache[$key]) === [];
+}
+
 function matchingPhraseRatio(array $phrases, string $haystack): float
 {
     $phrases = array_values(array_filter(array_map(static fn($phrase): string => trim((string)$phrase), $phrases)));
@@ -74,7 +95,9 @@ function matchingTokenRatio(array $keywords, string $haystack): float
 
 function getMatchingRequest(PDO $pdo, int $requestId, ?int $customerId = null): ?array
 {
-    $sql = 'SELECT r.id, r.customer_id, r.category_id, r.title, r.description, r.city, r.area, r.urgency,
+    $locationColumns = matchingTableHasColumns($pdo, 'service_requests', ['latitude', 'longitude'])
+        ? 'r.latitude, r.longitude' : 'NULL AS latitude, NULL AS longitude';
+    $sql = 'SELECT r.id, r.customer_id, r.category_id, r.title, r.description, r.city, r.area, ' . $locationColumns . ', r.urgency,
                    f.detected_category_id, f.problem_type, f.affected_entity, f.symptoms, f.context,
                    f.keywords, f.possible_service_types, f.location_context, f.confidence_score,
                    f.user_urgency, f.detected_urgency, f.analysis_method, f.version
@@ -109,6 +132,8 @@ function matchingRequestAttributes(array $request): array
         'possible_service_types' => matchingDecodeJson($request['possible_service_types'] ?? []),
         'city' => (string)($request['city'] ?? ''),
         'area' => (string)($request['area'] ?? ''),
+        'latitude' => isset($request['latitude']) ? (float)$request['latitude'] : null,
+        'longitude' => isset($request['longitude']) ? (float)$request['longitude'] : null,
         'confidence_score' => (int)($request['confidence_score'] ?? 0),
     ];
 }
@@ -119,20 +144,45 @@ function getProviderCandidates(PDO $pdo, int $requestId, ?int $customerId = null
     if (!$request) {
         return [];
     }
+    $publishedReviewClause = '';
+    try {
+        $statusColumn = $pdo->query("SHOW COLUMNS FROM reviews LIKE 'status'");
+        if ($statusColumn && $statusColumn->fetch()) {
+            $publishedReviewClause = " WHERE status = 'published'";
+        }
+    } catch (Throwable) {
+        // SQLite-backed module tests and older schemas do not have the moderation column.
+        try {
+            $columns = $pdo->query('PRAGMA table_info(reviews)')->fetchAll();
+            if (in_array('status', array_column($columns, 'name'), true)) {
+                $publishedReviewClause = " WHERE status = 'published'";
+            }
+        } catch (Throwable) {
+            $publishedReviewClause = '';
+        }
+    }
+    $providerLocationColumns = matchingTableHasColumns($pdo, 'provider_profiles', ['latitude', 'longitude', 'location_source'])
+        ? 'pp.latitude, pp.longitude, pp.location_source' : 'NULL AS latitude, NULL AS longitude, NULL AS location_source';
+    $responseTimeColumns = matchingTableHasColumns($pdo, 'provider_profiles', ['response_time_minutes', 'response_time_source'])
+        ? 'pp.response_time_minutes, pp.response_time_source'
+        : 'NULL AS response_time_minutes, NULL AS response_time_source';
+    $servicePriceColumn = matchingTableHasColumns($pdo, 'services', ['base_price']) ? 's.base_price' : 'NULL AS base_price';
     $stmt = $pdo->prepare(
-        'SELECT pp.id AS provider_id, pp.business_name, pp.phone, pp.address, pp.city, pp.area,
+        'SELECT pp.id AS provider_id, pp.business_name, pp.profile_image, pp.phone, pp.address, pp.city, pp.area,
+                ' . $providerLocationColumns . ', ' . $responseTimeColumns . ',
                 pp.description AS provider_description, pp.experience_years, pp.availability_status,
                 pp.verification_status, u.name AS provider_name, s.id AS service_id,
-                s.category_id, s.service_name, s.description AS service_description,
+                s.category_id, c.category_name, s.service_name, s.description AS service_description, ' . $servicePriceColumn . ',
                 COALESCE(review_stats.average_rating, 0) AS average_rating,
                 COALESCE(review_stats.review_count, 0) AS review_count,
                 COALESCE(job_stats.completed_jobs, 0) AS completed_jobs
          FROM provider_profiles pp
          INNER JOIN users u ON u.id = pp.user_id AND u.role = \'provider\'
          INNER JOIN services s ON s.provider_id = pp.id AND s.is_active = 1
+         INNER JOIN service_categories c ON c.id = s.category_id
          LEFT JOIN (
              SELECT provider_id, AVG(rating) AS average_rating, COUNT(*) AS review_count
-             FROM reviews GROUP BY provider_id
+             FROM reviews' . $publishedReviewClause . ' GROUP BY provider_id
          ) review_stats ON review_stats.provider_id = pp.id
          LEFT JOIN (
              SELECT provider_id, COUNT(*) AS completed_jobs
@@ -145,16 +195,23 @@ function getProviderCandidates(PDO $pdo, int $requestId, ?int $customerId = null
     $stmt->execute();
     $providers = [];
     foreach ($stmt->fetchAll() as $row) {
+        $row = decryptSensitiveFields($row, ['phone', 'address']);
         $providerId = (int)$row['provider_id'];
         if (!isset($providers[$providerId])) {
             $providers[$providerId] = [
                 'provider_id' => $providerId,
                 'provider_name' => (string)$row['provider_name'],
                 'business_name' => (string)$row['business_name'],
+                'profile_image' => (string)($row['profile_image'] ?? ''),
                 'phone' => (string)$row['phone'],
                 'address' => (string)$row['address'],
                 'city' => (string)$row['city'],
                 'area' => (string)($row['area'] ?? ''),
+                'latitude' => $row['latitude'] !== null ? (float)$row['latitude'] : null,
+                'longitude' => $row['longitude'] !== null ? (float)$row['longitude'] : null,
+                'location_source' => (string)($row['location_source'] ?? ''),
+                'response_time_minutes' => $row['response_time_minutes'] !== null ? (int)$row['response_time_minutes'] : null,
+                'response_time_source' => (string)($row['response_time_source'] ?? ''),
                 'provider_description' => (string)($row['provider_description'] ?? ''),
                 'experience_years' => (int)$row['experience_years'],
                 'availability_status' => (string)$row['availability_status'],
@@ -168,8 +225,10 @@ function getProviderCandidates(PDO $pdo, int $requestId, ?int $customerId = null
         $providers[$providerId]['services'][] = [
             'service_id' => (int)$row['service_id'],
             'category_id' => (int)$row['category_id'],
+            'category_name' => (string)$row['category_name'],
             'service_name' => (string)$row['service_name'],
             'description' => (string)($row['service_description'] ?? ''),
+            'base_price' => $row['base_price'] !== null ? (float)$row['base_price'] : null,
         ];
     }
     return array_values($providers);
@@ -264,10 +323,15 @@ function getRankedProvidersForRequest(PDO $pdo, int $requestId, ?int $customerId
 {
     $request = getMatchingRequest($pdo, $requestId, $customerId);
     if (!$request) return [];
+    $expectedCategoryId = matchingRequestAttributes($request)['category_id'];
     $ranked = [];
     foreach (getProviderCandidates($pdo, $requestId, $customerId) as $provider) {
         $result = array_merge($provider, calculateProviderMatchScore($request, $provider));
-        if ($result['score'] >= matchingThreshold()) {
+        // The weighted threshold can otherwise be reached through city and
+        // quality points alone. Keep the existing score and threshold, while
+        // requiring its category factor when ServiceDNA identified a category.
+        $categoryCompatible = $expectedCategoryId === null || $result['breakdown']['category'] > 0;
+        if ($result['score'] >= matchingThreshold() && $categoryCompatible) {
             $ranked[] = $result;
         }
     }

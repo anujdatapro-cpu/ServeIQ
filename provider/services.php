@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 require __DIR__ . '/../includes/session.php';
 require __DIR__ . '/../includes/csrf.php';
+require __DIR__ . '/../includes/validation.php';
 require __DIR__ . '/../includes/auth.php';
+require __DIR__ . '/../includes/audit.php';
 require __DIR__ . '/../config/database.php';
 
 requireProvider();
@@ -85,9 +87,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$serviceToDelete) {
             $errors[] = 'This service does not belong to your business.';
         } else {
-            $deleteSql = $pdo->prepare('DELETE FROM services WHERE id = :service_id AND provider_id = :provider_id');
+            $deleteSql = $pdo->prepare('UPDATE services SET is_active = 0 WHERE id = :service_id AND provider_id = :provider_id');
             $deleteSql->execute(['service_id' => $serviceId, 'provider_id' => (int) $providerProfile['id']]);
-            $successMessage = 'Service deleted successfully.';
+            writeAuditLog($pdo, 'service_deactivated', 'service', $serviceId, null, ['is_active' => false]);
+            $successMessage = 'Service deactivated. Existing booking history is retained.';
             $mode = 'create';
             $serviceData = ['service_name' => '', 'category_id' => '', 'description' => '', 'base_price' => '', 'is_active' => '1'];
         }
@@ -100,18 +103,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'is_active' => isset($_POST['is_active']) ? '1' : '0',
         ];
 
-        if ($serviceData['service_name'] === '') {
-            $errors[] = 'Service name is required.';
-        }
         if ($serviceData['category_id'] === '' || !ctype_digit($serviceData['category_id'])) {
             $errors[] = 'Please select a valid service category.';
         }
-        if ($serviceData['description'] === '') {
-            $errors[] = 'Service description is required.';
-        }
-        if ($serviceData['base_price'] === '' || !is_numeric($serviceData['base_price']) || (float)$serviceData['base_price'] < 0) {
-            $errors[] = 'Base price must be a valid number.';
-        }
+        $errors = array_merge($errors, array_values(validateServiceData($serviceData)));
 
         $categoryCount = $pdo->prepare('SELECT id FROM service_categories WHERE id = :category_id AND is_active = 1 LIMIT 1');
         $categoryCount->execute(['category_id' => (int)$serviceData['category_id']]);
@@ -160,6 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $stmt = $pdo->prepare($sql);
                     $stmt->execute($params);
+                    writeAuditLog($pdo, $serviceId > 0 ? 'service_updated' : 'service_created', 'service', $serviceId > 0 ? $serviceId : (int)$pdo->lastInsertId(), null, ['service_name' => $serviceData['service_name'], 'category_id' => (int)$serviceData['category_id'], 'is_active' => $serviceData['is_active'] === '1']);
                     $serviceData = ['service_name' => '', 'category_id' => '', 'description' => '', 'base_price' => '', 'is_active' => '1'];
                     $mode = 'create';
                 } catch (Exception $e) {
@@ -273,15 +269,15 @@ require __DIR__ . '/../includes/header.php';
                                     </div>
                                     <p class="text-muted mb-1"><?= htmlspecialchars($service['category_name'], ENT_QUOTES, 'UTF-8') ?></p>
                                     <p class="mb-2"><?= htmlspecialchars($service['description'], ENT_QUOTES, 'UTF-8') ?></p>
-                                    <strong class="text-primary">BDT <?= number_format((float)$service['base_price'], 2) ?></strong>
+                                    <strong class="text-primary">₹<?= number_format((float)$service['base_price'], 2) ?></strong>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <a href="services.php?edit=<?= (int)$service['id'] ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-                                    <form method="POST" onsubmit="return confirm('Delete this service?');">
+                                    <form method="POST" data-confirm="Deactivate this service? Existing booking history will remain available.">
                                         <?= csrfField() ?>
                                         <input type="hidden" name="delete_service" value="1">
                                         <input type="hidden" name="service_id" value="<?= (int)$service['id'] ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
                                     </form>
                                 </div>
                             </div>

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/encryption.php';
+
 /**
  * Phase 8: Booking & Service Workflow Helpers
  *
@@ -100,7 +102,8 @@ function findCustomerBooking(PDO $pdo, int $bookingId, int $customerId): ?array
          LIMIT 1'
     );
     $stmt->execute(['booking_id' => $bookingId, 'customer_id' => $customerId]);
-    return $stmt->fetch() ?: null;
+    $booking = $stmt->fetch();
+    return $booking ? decryptSensitiveFields($booking, ['provider_phone', 'provider_address']) : null;
 }
 
 function findProviderBooking(PDO $pdo, int $bookingId, int $providerId): ?array
@@ -120,7 +123,8 @@ function findProviderBooking(PDO $pdo, int $bookingId, int $providerId): ?array
          LIMIT 1'
     );
     $stmt->execute(['booking_id' => $bookingId, 'provider_id' => $providerId]);
-    return $stmt->fetch() ?: null;
+    $booking = $stmt->fetch();
+    return $booking ? decryptSensitiveFields($booking, ['customer_address']) : null;
 }
 
 function findBookingForRequest(PDO $pdo, int $requestId): ?array

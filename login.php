@@ -5,6 +5,11 @@ require __DIR__ . '/includes/session.php';
 require __DIR__ . '/includes/csrf.php';
 require __DIR__ . '/config/database.php';
 require __DIR__ . '/includes/auth.php';
+require __DIR__ . '/includes/audit.php';
+require __DIR__ . '/includes/login_throttle.php';
+require __DIR__ . '/includes/validation.php';
+require __DIR__ . '/includes/email_verification.php';
+require __DIR__ . '/config/email.php';
 
 if (isLoggedIn()) {
     $role = getUserRole();
@@ -15,13 +20,12 @@ if (isLoggedIn()) {
 $errors = [];
 $email = '';
 $redirectTarget = (string)($_GET['redirect'] ?? $_POST['redirect'] ?? '');
-$problemText = (string)($_GET['problem'] ?? $_POST['problem'] ?? '');
+$problemText = mb_substr((string)($_GET['problem'] ?? $_POST['problem'] ?? ''), 0, 5000);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireValidCsrfToken();
-    $email = trim($_POST['email'] ?? '');
+    $email = strtolower(trim($_POST['email'] ?? ''));
     $password = $_POST['password'] ?? '';
-    $rememberMe = isset($_POST['remember_me']);
     
     if (empty($email)) {
         $errors[] = 'Email is required.';
@@ -36,32 +40,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             $pdo = getDatabaseConnection();
-            
-            $stmt = $pdo->prepare('SELECT id, name, email, password, role FROM users WHERE email = ? AND role IN ("customer", "provider", "admin")');
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
-            
-            if ($user && password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = (int)$user['id'];
-                $_SESSION['user_name'] = $user['name'];
-                $_SESSION['user_email'] = $user['email'];
-                $_SESSION['user_role'] = $user['role'];
-                
-                if ($rememberMe) {
-                    setcookie('serveiq_email', $email, time() + (30 * 24 * 60 * 60), applicationBasePath() . '/');
-                }
-                
-                if (preg_match('/^customer\/create_request\.php$/', $redirectTarget)) {
-                    $destination = $redirectTarget;
-                    if ($problemText !== '') {
-                        $destination .= '?description=' . rawurlencode($problemText);
-                    }
-                    header('Location: ' . $destination);
-                } else {
-                    header('Location: ' . ($user['role'] === 'customer' ? 'customer/dashboard.php' : ($user['role'] === 'provider' ? 'provider/dashboard.php' : 'admin/dashboard.php')));
-                }
-                exit;
+            $clientIp = (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+
+            if (loginIsThrottled($pdo, $email, $clientIp)) {
+                writeAuditLog($pdo, 'login_throttled', 'authentication', null, null, ['identifier_hash' => loginThrottleHashes($email, $clientIp)[0]], null, null);
+                $errors[] = 'Invalid email or password. Please wait 15 minutes before trying again.';
             } else {
+                $stmt = $pdo->prepare('SELECT id, name, email, password, role, is_email_verified FROM users WHERE email = ? AND role IN ("customer", "provider", "admin")');
+                $stmt->execute([$email]);
+                $user = $stmt->fetch();
+
+                if ($user && password_verify($password, $user['password'])) {
+                    clearFailedLogins($pdo, $email, $clientIp);
+                    if ((int)$user['is_email_verified'] !== 1) {
+                        regenerateSessionId();
+                        $_SESSION['pending_verification_user_id'] = (int)$user['id'];
+                        $_SESSION['pending_verification_email'] = (string)$user['email'];
+                        header('Location: verify.php');
+                        exit;
+                    }
+                    regenerateSessionId();
+                    $_SESSION['user_id'] = (int)$user['id'];
+                    $_SESSION['user_name'] = $user['name'];
+                    $_SESSION['user_email'] = $user['email'];
+                    $_SESSION['user_role'] = $user['role'];
+
+                    writeAuditLog($pdo, 'login_success', 'user', (int)$user['id'], null, null, (int)$user['id'], (string)$user['role']);
+
+                    if (preg_match('/^customer\/create_request\.php$/', $redirectTarget)) {
+                        $destination = $redirectTarget;
+                        if ($problemText !== '') {
+                            $destination .= '?description=' . rawurlencode($problemText);
+                        }
+                        header('Location: ' . $destination);
+                    } else {
+                        header('Location: ' . ($user['role'] === 'customer' ? 'customer/dashboard.php' : ($user['role'] === 'provider' ? 'provider/dashboard.php' : 'admin/dashboard.php')));
+                    }
+                    exit;
+                }
+
+                recordFailedLogin($pdo, $email, $clientIp);
+                writeAuditLog($pdo, 'login_failure', 'authentication', null, null, ['identifier_hash' => loginThrottleHashes($email, $clientIp)[0]], null, null);
                 $errors[] = 'Invalid email or password. Please try again.';
             }
         } catch (Exception $e) {
@@ -71,9 +90,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-if (empty($email) && isset($_COOKIE['serveiq_email'])) {
-    $email = htmlspecialchars($_COOKIE['serveiq_email'], ENT_QUOTES, 'UTF-8');
-}
+$sessionNotice = (string)($_SESSION['flash_error'] ?? '');
+$successNotice = (string)($_SESSION['flash_success'] ?? '');
+unset($_SESSION['flash_error']);
+unset($_SESSION['flash_success']);
 
 $pageTitle = 'Log in | ServeIQ';
 $basePath = '';
@@ -99,6 +119,12 @@ require __DIR__ . '/includes/header.php';
                     </ul>
                 </div>
             <?php endif; ?>
+            <?php if ($sessionNotice !== ''): ?>
+                <div class="alert alert-warning" role="status"><?= htmlspecialchars($sessionNotice, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
+            <?php if ($successNotice !== ''): ?>
+                <div class="alert alert-success" role="status"><?= htmlspecialchars($successNotice, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php endif; ?>
             
             <form method="POST" class="auth-form" novalidate>
                 <?= csrfField() ?>
@@ -112,13 +138,6 @@ require __DIR__ . '/includes/header.php';
                 <div class="form-group">
                     <label for="password" class="form-label">Password</label>
                     <input type="password" id="password" name="password" class="form-control" required>
-                </div>
-                
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="remember_me" name="remember_me" value="1">
-                    <label class="form-check-label" for="remember_me">
-                        Remember my email
-                    </label>
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill">Log In</button>

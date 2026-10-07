@@ -60,7 +60,9 @@ $recentBookingsStmt = $pdo->prepare(
      INNER JOIN provider_profiles pp ON pp.id = b.provider_id
      LEFT JOIN services s ON s.id = b.service_id
      WHERE b.customer_id = :customer_id
-     ORDER BY b.created_at DESC
+       AND b.status IN ('pending', 'accepted', 'in_progress')
+       AND b.scheduled_date >= CURRENT_DATE
+     ORDER BY b.scheduled_date ASC, b.scheduled_time ASC
      LIMIT 4"
 );
 $recentBookingsStmt->execute(['customer_id' => $customerId]);
@@ -78,7 +80,7 @@ require __DIR__ . '/../includes/header.php';
             <div>
                 <span class="section-kicker">Customer Workspace</span>
                 <h1 class="mb-1">Welcome back, <?= htmlspecialchars($_SESSION['user_name'], ENT_QUOTES, 'UTF-8') ?></h1>
-                <p class="text-muted mb-0">Describe problems, inspect AI-assisted diagnostics, and manage bookings seamlessly.</p>
+                <p class="text-muted mb-0">Create a service request, review its structured details, and keep provider responses and bookings together.</p>
             </div>
             <div class="d-flex gap-2">
                 <a href="create_request.php" class="btn btn-primary">
@@ -92,20 +94,20 @@ require __DIR__ . '/../includes/header.php';
         <div class="hero-solve-card mb-5">
             <div class="row g-4 align-items-center">
                 <div class="col-lg-7">
-                    <span class="section-kicker"><i class="bi bi-magic me-1"></i>Intelligent Problem Intake</span>
+                    <span class="section-kicker"><i class="bi bi-chat-square-text me-1"></i>New service request</span>
                     <h2 class="h3 mb-2">What problem can we solve for you?</h2>
                     <p class="text-muted mb-3">
-                        Describe what's wrong in plain language. ServeIQ extracts diagnostic ServiceDNA, enriches it with semantic AI heuristics, and matches certified local specialists.
+                        Describe what is wrong in plain language. After you submit, ServeIQ creates a rule-based ServiceDNA summary and finds eligible providers using the available request and provider details.
                     </p>
                     <div class="mb-3">
-                        <textarea id="solveTextarea" class="form-control solve-textarea" placeholder="E.g., My laptop is overheating while gaming and the fan is making a loud noise..."></textarea>
+                        <textarea id="solveTextarea" class="form-control solve-textarea" maxlength="5000" placeholder="E.g., My laptop is overheating while gaming and the fan is making a loud noise..."></textarea>
                         <div class="d-flex justify-content-between align-items-center mt-2 small text-muted">
-                            <span id="solveCharCount">0 / 1000</span>
-                            <span>Min. 10 characters to analyze</span>
+                            <span id="solveCharCount">0 / 5000</span>
+                            <span>Describe the issue in at least 20 characters</span>
                         </div>
                     </div>
                     <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
-                        <span class="small text-muted fw-bold">Popular diagnostics:</span>
+                        <span class="small text-muted fw-bold">Example descriptions:</span>
                         <button type="button" class="quick-chip" data-problem="My laptop is overheating while gaming and the fan is making a loud noise.">
                             <i class="bi bi-laptop"></i> Laptop Overheating
                         </button>
@@ -142,7 +144,7 @@ require __DIR__ . '/../includes/header.php';
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">3</span>
-                                <span><strong>AI Enhancement</strong> — Semantic inference &amp; questions</span>
+                                <span><strong>Optional enhancement</strong> — A local rule-enhanced layer may add context and follow-up questions</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">4</span>
@@ -194,12 +196,12 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- Recent Bookings Section -->
+        <!-- Upcoming Bookings Section -->
         <div class="mb-5">
             <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                 <div>
-                    <h2 class="h4 mb-0">Active &amp; Recent Bookings</h2>
-                    <p class="text-muted small mb-0">Track provider responses, appointment confirmations, and service completion.</p>
+                    <h2 class="h4 mb-0">Upcoming Bookings</h2>
+                    <p class="text-muted small mb-0">Track future appointments and their current booking status.</p>
                 </div>
                 <a href="bookings.php" class="btn btn-sm btn-outline-secondary">View all bookings <i class="bi bi-arrow-right"></i></a>
             </div>
@@ -207,8 +209,8 @@ require __DIR__ . '/../includes/header.php';
             <?php if (empty($recentBookings)): ?>
                 <div class="empty-state-saas">
                     <div class="empty-state-icon"><i class="bi bi-calendar-check"></i></div>
-                    <h3 class="empty-state-title">No bookings yet</h3>
-                    <p class="empty-state-desc">Once you submit a request and choose a matched service provider, your scheduled appointments will appear here.</p>
+                    <h3 class="empty-state-title">No upcoming bookings</h3>
+                    <p class="empty-state-desc">Future pending, accepted, or in-progress appointments will appear here.</p>
                     <a href="create_request.php" class="btn btn-primary">Start a Request</a>
                 </div>
             <?php else: ?>
@@ -250,7 +252,7 @@ require __DIR__ . '/../includes/header.php';
             <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
                 <div>
                     <h2 class="h4 mb-0">Recent Service Requests</h2>
-                    <p class="text-muted small mb-0">Inspect derived ServiceDNA, AI diagnostic understanding, and recommended providers.</p>
+                    <p class="text-muted small mb-0">Inspect the structured problem summary, any enhancement output, and eligible provider matches.</p>
                 </div>
                 <a href="my_requests.php" class="btn btn-sm btn-outline-secondary">View all requests <i class="bi bi-arrow-right"></i></a>
             </div>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 require __DIR__ . '/../includes/session.php';
 require __DIR__ . '/../includes/csrf.php';
 require __DIR__ . '/../includes/auth.php';
+require __DIR__ . '/../includes/audit.php';
 require __DIR__ . '/../config/database.php';
 
 requireAdmin();
@@ -20,13 +21,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'update_verification' && $providerId && in_array($newStatus, ['approved', 'rejected', 'pending'], true)) {
         try {
-            $stmt = $pdo->prepare('UPDATE provider_profiles SET verification_status = :status, is_verified = :is_verified WHERE id = :id');
-            $stmt->execute([
-                'status' => $newStatus,
-                'is_verified' => $newStatus === 'approved' ? 1 : 0,
-                'id' => $providerId,
-            ]);
-            $message = 'Provider verification status updated successfully.';
+            $oldStmt = $pdo->prepare('SELECT verification_status FROM provider_profiles WHERE id = :id LIMIT 1');
+            $oldStmt->execute(['id' => $providerId]);
+            $oldStatus = $oldStmt->fetchColumn();
+            if ($oldStatus === false) {
+                $error = 'The selected provider was not found.';
+            } else {
+                $stmt = $pdo->prepare('UPDATE provider_profiles SET verification_status = :status WHERE id = :id');
+                $stmt->execute(['status' => $newStatus, 'id' => $providerId]);
+                writeAuditLog($pdo, 'provider_verification_changed', 'provider_profile', $providerId, ['verification_status' => $oldStatus], ['verification_status' => $newStatus]);
+                $message = 'Provider verification status updated successfully.';
+            }
         } catch (Throwable $e) {
             error_log($e->getMessage());
             $error = 'Failed to update provider status.';
@@ -36,14 +41,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $stmt = $pdo->query(
     'SELECT pp.id, pp.business_name, pp.phone, pp.city, pp.area, pp.experience_years,
-            pp.verification_status, pp.availability_status, pp.average_rating, pp.total_reviews,
+            pp.verification_status, pp.availability_status,
+            COALESCE(rep.average_rating, 0) AS average_rating, COALESCE(rep.total_reviews, 0) AS total_reviews,
             u.name AS provider_name, u.email AS provider_email, u.created_at
      FROM provider_profiles pp
      INNER JOIN users u ON u.id = pp.user_id
+     LEFT JOIN (
+         SELECT provider_id, ROUND(AVG(rating), 1) AS average_rating, COUNT(*) AS total_reviews
+         FROM reviews WHERE status = \'published\' GROUP BY provider_id
+     ) rep ON rep.provider_id = pp.id
      ORDER BY pp.created_at DESC
      LIMIT 100'
 );
 $providers = $stmt->fetchAll();
+$providers = array_map(static fn(array $provider): array => decryptSensitiveFields($provider, ['phone']), $providers);
 
 $pageTitle = 'Verify Providers | ServeIQ Admin';
 $basePath = '../';

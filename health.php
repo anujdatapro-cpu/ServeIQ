@@ -4,7 +4,7 @@ declare(strict_types=1);
 // health.php - Development health check
 // Verify PHP runtime and database connectivity
 
-session_start();
+require __DIR__ . '/includes/session.php';
 
 $pageTitle = 'ServeIQ Health Check';
 $basePath = '';
@@ -37,9 +37,10 @@ require __DIR__ . '/includes/header.php';
                         'detail' => 'MySQL connected'
                     ];
                 } catch (Exception $e) {
+                    error_log('ServeIQ health check database failure: ' . $e->getMessage());
                     $checks['Database Connection'] = [
                         'status' => 'ERROR',
-                        'detail' => htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
+                        'detail' => 'Database is unavailable. Check server logs for details.'
                     ];
                 }
                 
@@ -53,7 +54,7 @@ require __DIR__ . '/includes/header.php';
                 $uploadDir = __DIR__ . '/uploads/profiles';
                 $checks['Upload Directory'] = [
                     'status' => is_writable($uploadDir) ? 'OK' : 'WARNING',
-                    'detail' => $uploadDir
+                    'detail' => is_writable($uploadDir) ? 'Profile image storage is writable.' : 'Profile image storage is not writable.'
                 ];
                 
                 foreach ($checks as $name => $check):

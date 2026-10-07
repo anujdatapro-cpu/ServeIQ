@@ -2,14 +2,48 @@
 .env.*
 !.env.example
 
+# Local secrets and credential material
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.*
+secrets.*
+
 uploads/profiles/*
 !uploads/profiles/.gitkeep
 uploads/requests/*
 !uploads/requests/.gitkeep
+uploads/*
+!uploads/.htaccess
+!uploads/profiles/
+!uploads/profiles/.gitkeep
+!uploads/requests/
+!uploads/requests/.gitkeep
+!uploads/requests/.htaccess
+
+# Live database storage and backups. Keep the canonical schema, migrations,
+# seed/rollback scripts, tests, and database documentation tracked.
+database/backups/
+*.dump
+*.sql.backup
+*.sql.bak
+*.sql.gz
+
+# Generated email previews and test-only recipient artifacts
+*.eml
+*.email-preview
+serveiq.audit.admin.*@example.test
 
 vendor/
 node_modules/
 *.log
+logs/
+log/
+tmp/
+temp/
+*.tmp
+*.temp
 .DS_Store
 Thumbs.db
 .vscode/

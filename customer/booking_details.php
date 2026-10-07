@@ -7,6 +7,7 @@ require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/booking_helpers.php';
 require __DIR__ . '/../includes/adcs_helpers.php';
 require __DIR__ . '/../includes/review_helpers.php';
+require __DIR__ . '/../includes/audit.php';
 require __DIR__ . '/../services/service_dna.php';
 require __DIR__ . '/../config/database.php';
 
@@ -64,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 recordBookingStatus($pdo, $bookingId, (string)$booking['status'], 'cancelled', $customerId, 'Cancelled by customer');
+                writeAuditLog($pdo, 'booking_cancelled', 'booking', (int)$bookingId, ['status' => (string)$booking['status']], ['status' => 'cancelled']);
 
                 $pdo->commit();
                 header('Location: booking_details.php?id=' . $bookingId . '&cancelled=1');
@@ -229,7 +231,7 @@ require __DIR__ . '/../includes/header.php';
                             <span class="text-muted small text-uppercase">Service Item</span>
                             <h2 class="h4 mb-1"><?= htmlspecialchars($booking['service_name'] ?? 'General Service', ENT_QUOTES, 'UTF-8') ?></h2>
                             <?php if ($booking['base_price'] !== null): ?>
-                                <p class="text-muted small mb-0">Base rate: $<?= htmlspecialchars(number_format((float)$booking['base_price'], 2), ENT_QUOTES, 'UTF-8') ?></p>
+                                <p class="text-muted small mb-0">Base rate: ₹<?= htmlspecialchars(number_format((float)$booking['base_price'], 2), ENT_QUOTES, 'UTF-8') ?></p>
                             <?php endif; ?>
                         </div>
                         <div>

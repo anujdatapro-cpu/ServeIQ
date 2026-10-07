@@ -87,7 +87,7 @@ require __DIR__ . '/../includes/header.php';
                     <div>
                         <?php if (!empty($dna['ai_used'])): ?>
                             <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6">
-                                <i class="bi bi-cpu me-1"></i>AI Enhanced (<?= htmlspecialchars((string)($dna['ai_provider'] ?? 'local'), ENT_QUOTES, 'UTF-8') ?>)
+                                <i class="bi bi-cpu me-1"></i>Enhancement layer active (<?= htmlspecialchars((string)($dna['ai_provider'] ?? 'local'), ENT_QUOTES, 'UTF-8') ?>)
                             </span>
                         <?php else: ?>
                             <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fs-6">
@@ -101,11 +101,10 @@ require __DIR__ . '/../includes/header.php';
                     <div class="alert alert-warning mb-4">
                         <div class="d-flex align-items-center gap-2 mb-1">
                             <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
-                            <strong>Multi-Model Signal Reconciliation</strong>
+                            <strong>Analysis signals differ</strong>
                         </div>
                         <p class="mb-0 small">
-                            The AI diagnostic engine and deterministic pattern rules detected differing problem attributes.
-                            To guarantee diagnostic safety and avoid false assumptions, ServeIQ safely retained the deterministic rule classification as primary anchor.
+                            The enhancement layer and deterministic baseline produced different attributes. ServeIQ retained the deterministic result as the primary classification; review the original description and provider assessments when deciding what to do next.
                         </p>
                     </div>
                 <?php endif; ?>
@@ -152,7 +151,7 @@ require __DIR__ . '/../includes/header.php';
                         </div>
                     <?php else: ?>
                         <p class="small text-muted mb-0">
-                            <i class="bi bi-check-circle-fill text-success me-1"></i>Your problem description contains comprehensive diagnostic details. No additional questions required.
+                            <i class="bi bi-info-circle me-1"></i>No follow-up questions were generated for this description.
                         </p>
                     <?php endif; ?>
                 </div>

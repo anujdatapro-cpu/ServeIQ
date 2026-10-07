@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/encryption.php';
+
 function requestStatusLabel(string $status): string
 {
     return match ($status) {
@@ -64,7 +66,7 @@ function findCustomerRequest(PDO $pdo, int $requestId, int $customerId): ?array
     ]);
 
     $request = $stmt->fetch();
-    return $request ?: null;
+    return $request ? decryptSensitiveFields($request, ['address']) : null;
 }
 
 function requestImagePath(string $storedName): string

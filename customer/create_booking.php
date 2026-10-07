@@ -7,6 +7,8 @@ require __DIR__ . '/../includes/auth.php';
 require __DIR__ . '/../includes/request_helpers.php';
 require __DIR__ . '/../includes/matching_helpers.php';
 require __DIR__ . '/../includes/booking_helpers.php';
+require __DIR__ . '/../includes/validation.php';
+require __DIR__ . '/../includes/audit.php';
 require __DIR__ . '/../services/service_dna.php';
 require __DIR__ . '/../config/database.php';
 
@@ -123,13 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (!bookingDateTimeIsValid($scheduledDate, $scheduledTime)) {
-        $errors[] = 'Please choose a valid upcoming appointment date and time (from now up to 90 days ahead).';
-    }
-
-    if (mb_strlen($notes) > 3000) {
-        $errors[] = 'Appointment notes cannot exceed 3000 characters.';
-    }
+    $errors = array_merge($errors, array_values(validateBookingData(['scheduled_date' => $scheduledDate, 'scheduled_time' => $scheduledTime, 'notes' => $notes])));
 
     if (empty($errors)) {
         try {
@@ -169,6 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $reqUpdate->execute(['request_id' => $requestId]);
 
             $pdo->commit();
+            writeAuditLog($pdo, 'booking_created', 'booking', $bookingId, null, ['status' => 'pending', 'request_id' => $requestId, 'provider_id' => $providerId]);
 
             header('Location: booking_details.php?id=' . $bookingId . '&created=1');
             exit;
@@ -289,7 +286,7 @@ require __DIR__ . '/../includes/header.php';
                                                     <div class="d-flex justify-content-between align-items-start">
                                                         <strong class="d-block text-dark"><?= htmlspecialchars($service['service_name'], ENT_QUOTES, 'UTF-8') ?></strong>
                                                         <?php if ($service['base_price'] !== null): ?>
-                                                            <span class="badge text-bg-light border">$<?= htmlspecialchars(number_format((float)$service['base_price'], 2), ENT_QUOTES, 'UTF-8') ?></span>
+                                                            <span class="badge text-bg-light border">₹<?= htmlspecialchars(number_format((float)$service['base_price'], 2), ENT_QUOTES, 'UTF-8') ?></span>
                                                         <?php endif; ?>
                                                     </div>
                                                     <small class="text-muted d-block"><?= htmlspecialchars($service['category_name'], ENT_QUOTES, 'UTF-8') ?></small>

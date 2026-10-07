@@ -16,10 +16,24 @@ try {
         'providers' => $pdo->query("SELECT COUNT(*) as count FROM users WHERE role = 'provider'")->fetch()['count'],
         'service_categories' => $pdo->query('SELECT COUNT(*) as count FROM service_categories')->fetch()['count'],
         'service_requests' => $pdo->query('SELECT COUNT(*) as count FROM service_requests')->fetch()['count'],
-        'total_reviews' => $pdo->query('SELECT COUNT(*) as count FROM reviews')->fetch()['count'] ?? 0,
+        'total_reviews' => $pdo->query("SELECT COUNT(*) AS count FROM reviews WHERE status = 'published'")->fetch()['count'] ?? 0,
+        'active_bookings' => $pdo->query("SELECT COUNT(*) AS count FROM bookings WHERE status IN ('pending', 'accepted', 'in_progress')")->fetch()['count'] ?? 0,
+        'completed_bookings' => $pdo->query("SELECT COUNT(*) AS count FROM bookings WHERE status = 'completed'")->fetch()['count'] ?? 0,
+        'booking_cancellation_rate' => $pdo->query("SELECT CASE WHEN COUNT(*) = 0 THEN NULL ELSE ROUND(100 * SUM(status = 'cancelled') / COUNT(*), 1) END FROM bookings")->fetchColumn(),
+        'assessments' => $pdo->query("SELECT COUNT(*) AS count FROM provider_assessments WHERE status IN ('submitted', 'updated')")->fetch()['count'] ?? 0,
+        'consensus_results' => $pdo->query('SELECT COUNT(*) AS count FROM adcs_results')->fetch()['count'] ?? 0,
+        'matching_results' => $pdo->query('SELECT COUNT(*) AS count FROM matching_results')->fetch()['count'] ?? 0,
+        'average_match_score' => $pdo->query('SELECT ROUND(COALESCE(AVG(match_score), 0), 1) FROM matching_results')->fetchColumn(),
+        'average_rating' => $pdo->query("SELECT ROUND(COALESCE(AVG(rating), 0), 1) AS average_rating FROM reviews WHERE status = 'published'")->fetch()['average_rating'] ?? 0,
     ];
+    $requestStatusRows = $pdo->query('SELECT status, COUNT(*) AS total FROM service_requests GROUP BY status ORDER BY total DESC, status')->fetchAll();
+    try {
+        $stats['audit_events_24h'] = $pdo->query('SELECT COUNT(*) FROM audit_logs WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)')->fetchColumn();
+    } catch (Throwable) {
+        $stats['audit_events_24h'] = null;
+    }
 } catch (Exception $e) {
-    $stats = [];
+    $stats = null;
     error_log($e->getMessage());
 }
 
@@ -53,6 +67,24 @@ require __DIR__ . '/../includes/header.php';
                     <h3>Manage Users</h3>
                     <p class="text-muted">View and manage all users on the platform.</p>
                     <a href="users.php" class="btn btn-sm btn-primary">View Users</a>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-icon blue"><i class="bi bi-heart-pulse"></i></div>
+                    <h3>System Status</h3>
+                    <p class="text-muted">Check application runtime and database connectivity.</p>
+                    <a href="../health.php" class="btn btn-sm btn-primary">Open health check</a>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-icon cyan"><i class="bi bi-journal-check"></i></div>
+                    <h3>Audit Logs</h3>
+                    <p class="text-muted">Review recorded security and business events.</p>
+                    <a href="audit_logs.php" class="btn btn-sm btn-primary">View Audit Logs</a>
                 </div>
             </div>
             
@@ -116,6 +148,9 @@ require __DIR__ . '/../includes/header.php';
             <div class="col-12">
                 <h2 style="margin-bottom: 1.5rem;">Platform Statistics</h2>
             </div>
+            <?php if ($stats === null): ?>
+                <div class="col-12"><div class="alert alert-warning" role="status">Platform statistics are unavailable right now. Check database configuration and server logs.</div></div>
+            <?php else: ?>
             <div class="col-md-4 col-sm-6 mb-3">
                 <div class="stat-card">
                     <div class="stat-number"><?= htmlspecialchars((string)($stats['total_users'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
@@ -152,6 +187,34 @@ require __DIR__ . '/../includes/header.php';
                     <div class="stat-label">Verified Reviews</div>
                 </div>
             </div>
+            <?php foreach ([
+                'active_bookings' => 'Active Bookings',
+                'completed_bookings' => 'Completed Bookings',
+                'booking_cancellation_rate' => 'Bookings Cancelled',
+                'assessments' => 'Current Assessments',
+                'consensus_results' => 'ADCS Results',
+                'matching_results' => 'Provider Match Results',
+                'average_match_score' => 'Average Match Score',
+                'average_rating' => 'Average Published Rating',
+                'audit_events_24h' => 'Audit Events (24h)',
+            ] as $metric => $label): ?>
+                <div class="col-md-4 col-sm-6 mb-3"><div class="stat-card"><div class="stat-number"><?php if ($stats[$metric] === null): ?>—<?php else: ?><?= htmlspecialchars((string)$stats[$metric], ENT_QUOTES, 'UTF-8') ?><?= $metric === 'booking_cancellation_rate' ? '%' : ($metric === 'average_match_score' ? '/100' : '') ?><?php endif; ?></div><div class="stat-label"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></div></div></div>
+            <?php endforeach; ?>
+            <div class="col-12 mb-3">
+                <section class="card border-0 p-4" aria-labelledby="request-status-heading">
+                    <h3 id="request-status-heading" class="h5">Requests by status</h3>
+                    <?php if ($requestStatusRows === []): ?>
+                        <p class="text-muted mb-0">No request data available.</p>
+                    <?php else: ?>
+                        <div class="request-status-list">
+                            <?php foreach ($requestStatusRows as $statusRow): ?>
+                                <div class="request-status-item"><span><?= htmlspecialchars(ucwords(str_replace('_', ' ', (string)$statusRow['status'])), ENT_QUOTES, 'UTF-8') ?></span><strong><?= (int)$statusRow['total'] ?></strong></div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </section>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </main>

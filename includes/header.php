@@ -5,6 +5,7 @@ require_once __DIR__ . '/session.php';
 
 $pageTitle = $pageTitle ?? 'ServeIQ | Find the right service';
 $basePath = $basePath ?? '';
+$assetVersion = (string) (filemtime(__DIR__ . '/../assets/css/style.css') . '.' . filemtime(__DIR__ . '/../assets/js/main.js'));
 ?>
 <!doctype html>
 <html lang="en">
@@ -18,7 +19,7 @@ $basePath = $basePath ?? '';
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="<?= $basePath ?>assets/css/style.css" rel="stylesheet">
+    <link href="<?= $basePath ?>assets/css/style.css?v=<?= htmlspecialchars($assetVersion, ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
 </head>
-<body>
+<body class="<?= htmlspecialchars($bodyClass ?? '', ENT_QUOTES, 'UTF-8') ?>">
 <?php require __DIR__ . '/navbar.php'; ?>
