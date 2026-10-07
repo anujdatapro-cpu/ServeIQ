@@ -102,6 +102,7 @@ require __DIR__ . '/includes/header.php';
 
 <main class="auth-page">
     <div class="container">
+        <aside class="auth-story" aria-label="About the ServeIQ service workflow"><a class="brand-mark" href="index.php"><span class="brand-symbol"><i class="bi bi-stars"></i></span><span>Serve<span class="brand-accent">IQ</span></span></a><span class="section-kicker">A clearer way to find help</span><h2>From a real-world problem to the right local service.</h2><p>Describe what is happening. ServeIQ organizes the details and helps you compare relevant providers.</p><div class="auth-story-flow"><span>PROBLEM</span><i class="bi bi-arrow-down"></i><span>ServiceDNA</span><i class="bi bi-arrow-down"></i><span>PROVIDER MATCH</span></div></aside>
         <div class="auth-panel">
             <div class="auth-header">
                 <span class="section-kicker">Welcome back</span>

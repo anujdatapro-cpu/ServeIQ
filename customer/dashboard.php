@@ -76,11 +76,11 @@ require __DIR__ . '/../includes/header.php';
 <main class="dashboard-page">
     <div class="container-fluid">
         <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
+        <div class="workspace-welcome d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
             <div>
                 <span class="section-kicker">Customer Workspace</span>
-                <h1 class="mb-1">Welcome back, <?= htmlspecialchars($_SESSION['user_name'], ENT_QUOTES, 'UTF-8') ?></h1>
-                <p class="text-muted mb-0">Create a service request, review its structured details, and keep provider responses and bookings together.</p>
+                <h1 class="mb-1">What can we solve for you, <?= htmlspecialchars($_SESSION['user_name'], ENT_QUOTES, 'UTF-8') ?>?</h1>
+                <p class="text-muted mb-0">Start with what is happening. Your requests, provider matches, and bookings stay connected here.</p>
             </div>
             <div class="d-flex gap-2">
                 <a href="create_request.php" class="btn btn-primary">

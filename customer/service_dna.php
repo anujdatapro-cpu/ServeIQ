@@ -78,7 +78,7 @@ require __DIR__ . '/../includes/header.php';
 
         <?php if ($dna): ?>
             <!-- AI Diagnostic Summary Card -->
-            <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
+            <div class="card service-dna-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
                     <div>
                         <span class="section-kicker">Phase 10 · Intelligence Layer</span>

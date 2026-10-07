@@ -43,9 +43,12 @@ $workspaceLinks = match ($role) {
                     <li class="nav-item"><a class="nav-link<?= $isActiveLink($basePath . 'index.php') ?>" href="<?= $basePath ?>index.php">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>index.php#how-it-works">How it works</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>index.php#services">Services</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>index.php#problem-box">For customers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>index.php#for-providers">For providers</a></li>
                     <li class="nav-item"><a class="nav-link" href="<?= $basePath ?>index.php#about">About</a></li>
                 </ul>
                 <div class="d-flex align-items-center gap-2 nav-actions">
+                    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode" title="Switch theme" aria-pressed="false"><i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i><span class="visually-hidden" data-theme-label>Switch to dark mode</span></button>
                     <a class="btn btn-link nav-login" href="<?= $basePath ?>login.php">Log in</a>
                     <a class="btn btn-outline-primary rounded-pill px-3" href="<?= $basePath ?>register.php?role=provider">Become a provider</a>
                     <a class="btn btn-primary rounded-pill px-4" href="<?= $basePath ?>register.php">Get started <i class="bi bi-arrow-up-right ms-1"></i></a>
@@ -65,7 +68,8 @@ $workspaceLinks = match ($role) {
                     </li>
                 </ul>
                 <div class="d-flex align-items-center gap-2 nav-actions">
-                    <span class="text-muted small d-none d-xl-inline"><?= htmlspecialchars(mb_substr((string)($_SESSION['user_name'] ?? ''), 0, 24), ENT_QUOTES, 'UTF-8') ?></span>
+                    <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode" title="Switch theme" aria-pressed="false"><i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i><span class="visually-hidden" data-theme-label>Switch to dark mode</span></button>
+                    <span class="nav-account d-none d-xl-inline"><span class="nav-account-role"><?= htmlspecialchars(ucfirst($role), ENT_QUOTES, 'UTF-8') ?> workspace</span><strong><?= htmlspecialchars(mb_substr((string)($_SESSION['user_name'] ?? ''), 0, 24), ENT_QUOTES, 'UTF-8') ?></strong></span>
                     <form method="POST" action="<?= $basePath ?>logout.php" class="d-inline"><?= csrfField() ?><button type="submit" class="btn btn-outline-secondary btn-sm">Log out</button></form>
                 </div>
             <?php endif; ?>

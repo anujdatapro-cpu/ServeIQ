@@ -4,8 +4,29 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // The theme is set in the document head to avoid a first-paint flash.
+    const themeButtons = document.querySelectorAll('[data-theme-toggle]');
+    const themeIcon = document.querySelector('[data-theme-icon]');
+    const themeLabel = document.querySelector('[data-theme-label]');
+    const syncThemeControls = () => {
+        const dark = document.documentElement.dataset.theme === 'dark';
+        themeButtons.forEach(button => {
+            button.setAttribute('aria-pressed', String(dark));
+            button.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        });
+        if (themeIcon) themeIcon.className = `bi ${dark ? 'bi-sun' : 'bi-moon-stars'}`;
+        if (themeLabel) themeLabel.textContent = dark ? 'Switch to light mode' : 'Switch to dark mode';
+    };
+    syncThemeControls();
+    themeButtons.forEach(button => button.addEventListener('click', () => {
+        const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = nextTheme;
+        try { localStorage.setItem('serveiq-theme', nextTheme); } catch (_) {}
+        syncThemeControls();
+    }));
+
     // Keep the public navigation functional when the optional Bootstrap CDN is unavailable.
-    const navigationToggle = document.querySelector('.homepage .navbar-toggler');
+    const navigationToggle = document.querySelector('.navbar-toggler');
     const navigationMenu = document.querySelector('#mainNavigation');
     if (navigationToggle && navigationMenu && !window.bootstrap) {
         navigationToggle.addEventListener('click', () => {
@@ -326,5 +347,131 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         window.addEventListener('scroll', updateNav, { passive: true });
         updateNav();
+    }
+
+    // Homepage photographs are optional and lazy-loaded only near view.
+    const illustrationNodes = document.querySelectorAll('[data-image-url]');
+    const loadedIllustrations = new Map();
+    const revealIllustration = element => {
+        const imageUrl = element.dataset.imageUrl;
+        if (!imageUrl) return;
+        const cached = loadedIllustrations.get(imageUrl);
+        if (cached === true) {
+            element.style.backgroundImage = `url("${imageUrl}")`;
+            return;
+        }
+        if (cached === false) {
+            element.classList.add('illustration-unavailable');
+            return;
+        }
+        if (cached === 'loading') return;
+        loadedIllustrations.set(imageUrl, 'loading');
+        const image = new Image();
+        image.onload = () => {
+            loadedIllustrations.set(imageUrl, true);
+            Array.from(illustrationNodes).filter(node => node.dataset.imageUrl === imageUrl).forEach(node => {
+                node.style.backgroundImage = `url("${imageUrl}")`;
+            });
+        };
+        image.onerror = () => {
+            loadedIllustrations.set(imageUrl, false);
+            Array.from(illustrationNodes).filter(node => node.dataset.imageUrl === imageUrl).forEach(node => node.classList.add('illustration-unavailable'));
+        };
+        image.src = imageUrl;
+    };
+    if ('IntersectionObserver' in window) {
+        const illustrationObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                revealIllustration(entry.target);
+                observer.unobserve(entry.target);
+            });
+        }, { rootMargin: '220px 0px' });
+        illustrationNodes.forEach(node => illustrationObserver.observe(node));
+    } else {
+        illustrationNodes.forEach(revealIllustration);
+    }
+
+    if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('is-revealed');
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -35px 0px' });
+        document.querySelectorAll('main > section:not(.product-hero), .dashboard-page > .container-fluid > section').forEach((section, index) => {
+            section.classList.add('reveal-on-scroll');
+            section.style.setProperty('--reveal-delay', `${Math.min(index % 3, 2) * 65}ms`);
+            revealObserver.observe(section);
+        });
+    }
+
+    const networkVisual = document.querySelector('.hero-network');
+    if (networkVisual && window.matchMedia('(hover: hover) and (pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        let networkFrame = 0;
+        networkVisual.addEventListener('pointermove', event => {
+            if (networkFrame) return;
+            const pointerX = event.clientX;
+            const pointerY = event.clientY;
+            networkFrame = requestAnimationFrame(() => {
+                const bounds = networkVisual.getBoundingClientRect();
+                const x = ((pointerX - bounds.left) / bounds.width - 0.5) * 3.6;
+                const y = ((pointerY - bounds.top) / bounds.height - 0.5) * 2.4;
+                networkVisual.style.setProperty('--network-x', `${x}px`);
+                networkVisual.style.setProperty('--network-y', `${y}px`);
+                networkFrame = 0;
+            });
+        }, { passive: true });
+        networkVisual.addEventListener('pointerleave', () => {
+            networkVisual.style.setProperty('--network-x', '0px');
+            networkVisual.style.setProperty('--network-y', '0px');
+        }, { passive: true });
+    }
+
+    // A small desktop cursor accent and click glint. Decorative elements never
+    // receive pointer events and are omitted on touch devices or reduced motion.
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (finePointer && !reducedMotion) {
+        const cursor = document.createElement('span');
+        cursor.className = 'serveiq-cursor-glow';
+        cursor.setAttribute('aria-hidden', 'true');
+        document.body.append(cursor);
+        let frame = 0;
+        let x = 0;
+        let y = 0;
+        let lastParticleAt = 0;
+        document.addEventListener('pointermove', event => {
+            x = event.clientX;
+            y = event.clientY;
+            const now = performance.now();
+            if (now - lastParticleAt > 85) {
+                lastParticleAt = now;
+                const particle = document.createElement('span');
+                particle.className = 'serveiq-cursor-particle';
+                particle.setAttribute('aria-hidden', 'true');
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                document.body.append(particle);
+                window.setTimeout(() => particle.remove(), 380);
+            }
+            if (frame) return;
+            frame = requestAnimationFrame(() => {
+                cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                cursor.classList.add('is-visible');
+                frame = 0;
+            });
+        }, { passive: true });
+        document.addEventListener('pointerdown', event => {
+            if (event.button !== 0 || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+            const sparkle = document.createElement('span');
+            sparkle.className = 'serveiq-click-sparkle';
+            sparkle.setAttribute('aria-hidden', 'true');
+            sparkle.style.left = `${event.clientX}px`;
+            sparkle.style.top = `${event.clientY}px`;
+            document.body.append(sparkle);
+            window.setTimeout(() => sparkle.remove(), 520);
+        }, { passive: true });
     }
 });

@@ -42,13 +42,14 @@ $basePath = '../';
 require __DIR__ . '/../includes/header.php';
 ?>
 
-<main class="dashboard-page">
+<main class="dashboard-page admin-dashboard">
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
                 <div class="dashboard-header">
                     <div>
-                        <h1>Admin Panel</h1>
+                        <span class="section-kicker">ServeIQ operations</span>
+                        <h1>Platform overview</h1>
                         <p class="text-muted">Platform management and statistics</p>
                     </div>
                     <div>

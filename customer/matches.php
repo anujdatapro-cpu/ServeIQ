@@ -97,7 +97,7 @@ require __DIR__ . '/../includes/header.php';
         <?php endif; ?>
 
         <!-- Request Diagnostic Context Summary -->
-        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light">
+        <div class="matching-context-card card border-0 shadow-sm rounded-4 p-4 mb-4 bg-light">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <span class="text-muted small text-uppercase fw-bold">Service Request Target</span>
@@ -133,7 +133,7 @@ require __DIR__ . '/../includes/header.php';
                             : '../assets/images/default-avatar.svg';
                     ?>
                     <div class="col-12">
-                        <article class="request-list-card">
+                        <article class="request-list-card provider-match-card<?= (int)$provider['ranking_position'] === 1 ? ' top-match' : '' ?>">
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                                 <div class="d-flex align-items-start gap-3">
                                     <img class="provider-avatar" src="<?= htmlspecialchars($avatarPath, ENT_QUOTES, 'UTF-8') ?>" alt="" loading="lazy" width="56" height="56">
@@ -188,7 +188,7 @@ require __DIR__ . '/../includes/header.php';
                             <hr class="my-3">
 
                             <!-- Explainable Match Reasons -->
-                            <div class="mb-3">
+                            <div class="match-explanation mb-3">
                                 <h3 class="h6 text-uppercase text-muted mb-2">Why this provider matched</h3>
                                 <div class="d-flex flex-wrap gap-2">
                                     <?php foreach ($provider['reasons'] as $reason): ?>

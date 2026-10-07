@@ -115,8 +115,8 @@ require __DIR__ . '/../includes/header.php';
             <div class="col-12">
                 <div class="dashboard-header">
                     <div>
-                        <span class="section-kicker">Service Provider Workspace</span>
-                        <h1 class="mb-1">Welcome back, <?= htmlspecialchars($_SESSION['user_name'], ENT_QUOTES, 'UTF-8') ?>!</h1>
+                        <span class="section-kicker">Professional service partner</span>
+                        <h1 class="mb-1">Your service workspace</h1>
                         <p class="text-muted mb-0"><?= htmlspecialchars($businessName, ENT_QUOTES, 'UTF-8') ?> · Service Operations</p>
                     </div>
                     <div>

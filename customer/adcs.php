@@ -77,7 +77,7 @@ require __DIR__ . '/../includes/header.php';
         </div>
 
         <!-- PART I: 3-STAGE VISUAL CONSENSUS ARCHITECTURE -->
-        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <div class="card adcs-panel border-0 shadow-sm rounded-4 p-4 mb-4">
             <span class="section-kicker mb-2">Consensus Architecture</span>
             <div class="row g-3 text-center">
                 <div class="col-md-4">
@@ -118,7 +118,7 @@ require __DIR__ . '/../includes/header.php';
         <?php endif; ?>
 
         <!-- Consensus Metrics Breakdown -->
-        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4">
+        <div class="card adcs-panel adcs-score-panel border-0 shadow-sm rounded-4 p-4 p-md-5 mb-4">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <div>
                     <span class="section-kicker">Consensus Synthesis</span>

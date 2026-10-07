@@ -165,7 +165,7 @@ require __DIR__ . '/../includes/header.php';
 
         <!-- ServiceDNA Card -->
         <?php if ($serviceDna): ?>
-            <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
+            <div class="card service-dna-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
                     <div>
                         <span class="section-kicker">Phase 10 · ServiceDNA</span>
@@ -221,7 +221,7 @@ require __DIR__ . '/../includes/header.php';
 
         <!-- ADCS Consensus Card -->
         <?php if ($adcsSummary): ?>
-            <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
+            <div class="card adcs-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
                     <div>
                         <span class="section-kicker">Phase 7</span>
@@ -255,7 +255,7 @@ require __DIR__ . '/../includes/header.php';
                 <div class="row g-3 mt-1">
                     <?php foreach (array_slice($rankedProviders, 0, 3) as $provider): ?>
                         <div class="col-lg-4">
-                            <div class="border rounded-3 p-3 h-100 d-flex flex-column justify-content-between">
+                                <div class="provider-match-card border rounded-3 p-3 h-100 d-flex flex-column justify-content-between">
                                 <div>
                                     <div class="d-flex justify-content-between gap-2">
                                         <h3 class="h6 mb-1"><?= htmlspecialchars($provider['business_name'], ENT_QUOTES, 'UTF-8') ?></h3>
