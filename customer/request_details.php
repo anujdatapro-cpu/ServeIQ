@@ -114,7 +114,7 @@ require __DIR__ . '/../includes/header.php';
             <div class="card shadow-sm border-0 border-start border-4 border-primary rounded-4 p-4 mb-4 bg-light">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <span class="section-kicker">Phase 8 · Active Booking</span>
+                        <span class="section-kicker">Active Booking</span>
                         <h2 class="h5 mb-1">Booked with <?= htmlspecialchars($booking['business_name'], ENT_QUOTES, 'UTF-8') ?></h2>
                         <p class="text-muted mb-0">
                             Service: <strong><?= htmlspecialchars($booking['service_name'] ?? 'General Service', ENT_QUOTES, 'UTF-8') ?></strong> · 
@@ -177,12 +177,12 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- ServiceDNA Card -->
+        <!-- Service Analysis Card -->
         <?php if ($serviceDna): ?>
             <div class="card service-dna-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
                     <div>
-                        <span class="section-kicker">Phase 10 · ServiceDNA</span>
+                        <span class="section-kicker">Service Analysis</span>
                         <h2 class="h4 mb-1">Diagnostic Understanding</h2>
                         <p class="text-muted mb-0">Advisory service suggestions derived from your description.</p>
                     </div>
@@ -238,7 +238,7 @@ require __DIR__ . '/../includes/header.php';
             <div class="card adcs-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
                     <div>
-                        <span class="section-kicker">Phase 7</span>
+                        <span class="section-kicker">Provider Input</span>
                         <h2 class="h4 mb-1">Provider Assessment Consensus</h2>
                         <p class="text-muted mb-0">Compare independent preliminary assessments. This is decision support, not a final diagnosis.</p>
                     </div>
@@ -257,7 +257,7 @@ require __DIR__ . '/../includes/header.php';
         <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
             <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
                 <div>
-                    <span class="section-kicker">Phase 6</span>
+                    <span class="section-kicker">Matching</span>
                     <h2 class="h4 mb-1">Recommended Service Providers</h2>
                     <p class="text-muted mb-0">Ranked using category, technical, location, and provider-quality evidence.</p>
                 </div>

@@ -30,7 +30,7 @@ if (!$requestId || $requestId < 1) {
 $request = $requestId ? findCustomerRequest($pdo, (int)$requestId, $customerId) : null;
 
 $message = (string)($_GET['status'] ?? '') === 'reanalyzed'
-    ? 'ServiceDNA was analyzed again. Matching was refreshed and prior assessments were invalidated.'
+    ? 'Service Analysis was refreshed. Matching was updated accordingly.'
     : '';
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
             $pdo->rollBack();
         }
         error_log($exception->getMessage());
-        $error = 'ServiceDNA could not be generated right now.';
+        $error = 'Service Analysis could not be generated right now.';
     }
 }
 $dna = $requestId ? getServiceDnaForRequest($pdo, (int)$requestId) : null;
@@ -62,8 +62,8 @@ require __DIR__ . '/../includes/header.php';
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
             <div>
                 <span class="section-kicker">Customer Workspace</span>
-                <h1 class="mb-1">ServiceDNA Summary</h1>
-                <p class="text-muted mb-0">A transparent hybrid interpretation of your original problem description.</p>
+                <h1 class="mb-1">Service Analysis Summary</h1>
+                <p class="text-muted mb-0">A transparent interpretation of your original problem description.</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <?php if ($requestId): ?>
@@ -92,9 +92,9 @@ require __DIR__ . '/../includes/header.php';
 
         <?php if (!$request): ?>
             <div class="empty-state-card text-center p-5 card border-0 shadow-sm rounded-4">
-                <i class="bi bi-fingerprint fs-1 text-primary mb-3"></i>
+                <i class="bi bi-search fs-1 text-primary mb-3"></i>
                 <h2 class="h4">No Service Requests Found</h2>
-                <p class="text-muted mb-3">You have not submitted any service requests yet. ServiceDNA is automatically generated when you submit a problem request.</p>
+                <p class="text-muted mb-3">You have not submitted any service requests yet. Service Analysis is automatically generated when you submit a problem request.</p>
                 <a href="create_request.php" class="btn btn-primary rounded-pill px-4">Describe Your Problem</a>
             </div>
         <?php else: ?>
@@ -113,11 +113,11 @@ require __DIR__ . '/../includes/header.php';
         </div>
 
         <?php if ($dna): ?>
-            <!-- AI Diagnostic Summary Card -->
+            <!-- Diagnostic Summary Card -->
             <div class="card service-dna-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
                     <div>
-                        <span class="section-kicker">Phase 10 · Intelligence Layer</span>
+                        <span class="section-kicker">Service Analysis</span>
                         <h2 class="h4 mb-0">Diagnostic Interpretation</h2>
                     </div>
                     <div>
@@ -127,7 +127,7 @@ require __DIR__ . '/../includes/header.php';
                             </span>
                         <?php else: ?>
                             <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fs-6">
-                                <i class="bi bi-shield-check me-1"></i>Deterministic Baseline Fallback
+                                <i class="bi bi-shield-check me-1"></i>Baseline Analysis
                             </span>
                         <?php endif; ?>
                     </div>
@@ -140,7 +140,7 @@ require __DIR__ . '/../includes/header.php';
                             <strong>Analysis signals differ</strong>
                         </div>
                         <p class="mb-0 small">
-                            The enhancement layer and deterministic baseline produced different attributes. ServeIQ retained the deterministic result as the primary classification; review the original description and provider assessments when deciding what to do next.
+                            The enhancement layer and deterministic baseline produced different attributes. ServeIQ retained the baseline result as the primary classification; review the original description and provider assessments when deciding what to do next.
                         </p>
                     </div>
                 <?php endif; ?>
@@ -206,20 +206,19 @@ require __DIR__ . '/../includes/header.php';
 
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4 pt-3 border-top">
                     <p class="small text-muted mb-0">
-                        <strong>Engine:</strong> <?= htmlspecialchars((string)($dna['engine_version'] ?? 'rule-based-1.0'), ENT_QUOTES, 'UTF-8') ?>
-                        (<?= htmlspecialchars((string)$dna['analysis_method'], ENT_QUOTES, 'UTF-8') ?> v<?= (int)$dna['version'] ?>).
+                        <strong>Engine:</strong> <?= htmlspecialchars((string)($dna['engine_version'] ?? 'rule-based-1.0'), ENT_QUOTES, 'UTF-8') ?>.
                         Analysis is advisory and does not alter your original request text.
                     </p>
                     <form method="POST">
                         <button type="submit" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-arrow-repeat me-1"></i>Re-analyze ServiceDNA
+                            <i class="bi bi-arrow-repeat me-1"></i>Refresh Analysis
                         </button>
                         <?= csrfField() ?>
                     </form>
                 </div>
             </div>
         <?php else: ?>
-            <div class="alert alert-info">No ServiceDNA is available yet.</div>
+            <div class="alert alert-info">No Service Analysis is available yet.</div>
         <?php endif; ?>
         <?php endif; ?>
     </div>

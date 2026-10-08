@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             analyzeButton.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Analyzing rules…';
             if (problemValidation) problemValidation.textContent = '';
             analysisResult.hidden = false;
-            analysisResult.textContent = 'Creating a deterministic ServiceDNA preview…';
+            analysisResult.textContent = 'Creating a deterministic Service Analysis preview…';
 
             try {
                 const response = await fetch(analyzerCard.dataset.previewUrl, {
@@ -120,14 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }),
                 });
                 const payload = await response.json();
-                if (!response.ok) throw new Error(payload.error || 'ServiceDNA preview is unavailable.');
+                if (!response.ok) throw new Error(payload.error || 'Service Analysis preview is unavailable.');
 
                 const heading = document.createElement('h3');
                 heading.className = 'h6';
-                heading.textContent = 'Rule-based ServiceDNA preview';
+                heading.textContent = 'Rule-based Service Analysis preview';
                 const note = document.createElement('p');
                 note.className = 'small text-muted';
-                note.textContent = 'This preview is not saved. Submit the request to continue through matching and provider assessment.';
+                note.textContent = 'This preview is not saved. Submit the request to continue through matching and provider response.';
                 const grid = document.createElement('dl');
                 grid.className = 'service-dna-preview-grid mb-0';
                 const fields = [
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 analysisResult.classList.remove('is-error');
                 analysisResult.classList.add('is-ready');
             } catch (error) {
-                analysisResult.textContent = error instanceof Error ? error.message : 'ServiceDNA preview is unavailable. You can still start a request.';
+                analysisResult.textContent = error instanceof Error ? error.message : 'Service Analysis preview is unavailable. You can still start a request.';
                 analysisResult.classList.remove('is-ready');
                 analysisResult.classList.add('is-error');
             } finally {
@@ -347,231 +347,5 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         window.addEventListener('scroll', updateNav, { passive: true });
         updateNav();
-    }
-
-    // Homepage photographs are optional and lazy-loaded only near view.
-    const illustrationNodes = document.querySelectorAll('[data-image-url]');
-    const loadedIllustrations = new Map();
-    const revealIllustration = element => {
-        const imageUrl = element.dataset.imageUrl;
-        if (!imageUrl) return;
-        const cached = loadedIllustrations.get(imageUrl);
-        if (cached === true) {
-            element.style.backgroundImage = `url("${imageUrl}")`;
-            return;
-        }
-        if (cached === false) {
-            element.classList.add('illustration-unavailable');
-            return;
-        }
-        if (cached === 'loading') return;
-        loadedIllustrations.set(imageUrl, 'loading');
-        const image = new Image();
-        image.onload = () => {
-            loadedIllustrations.set(imageUrl, true);
-            Array.from(illustrationNodes).filter(node => node.dataset.imageUrl === imageUrl).forEach(node => {
-                node.style.backgroundImage = `url("${imageUrl}")`;
-            });
-        };
-        image.onerror = () => {
-            loadedIllustrations.set(imageUrl, false);
-            Array.from(illustrationNodes).filter(node => node.dataset.imageUrl === imageUrl).forEach(node => node.classList.add('illustration-unavailable'));
-        };
-        image.src = imageUrl;
-    };
-    if ('IntersectionObserver' in window) {
-        const illustrationObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) return;
-                revealIllustration(entry.target);
-                observer.unobserve(entry.target);
-            });
-        }, { rootMargin: '220px 0px' });
-        illustrationNodes.forEach(node => illustrationObserver.observe(node));
-    } else {
-        illustrationNodes.forEach(revealIllustration);
-    }
-
-    if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        const revealObserver = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) return;
-                entry.target.classList.add('is-revealed');
-                observer.unobserve(entry.target);
-            });
-        }, { threshold: 0.12, rootMargin: '0px 0px -35px 0px' });
-        document.querySelectorAll('main > section:not(.product-hero), .dashboard-page > .container-fluid > section').forEach((section, index) => {
-            section.classList.add('reveal-on-scroll');
-            section.style.setProperty('--reveal-delay', `${Math.min(index % 3, 2) * 65}ms`);
-            revealObserver.observe(section);
-        });
-    }
-
-    const networkVisual = document.querySelector('.hero-network');
-    if (networkVisual && window.matchMedia('(hover: hover) and (pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        let networkFrame = 0;
-        networkVisual.addEventListener('pointermove', event => {
-            if (networkFrame) return;
-            const pointerX = event.clientX;
-            const pointerY = event.clientY;
-            networkFrame = requestAnimationFrame(() => {
-                const bounds = networkVisual.getBoundingClientRect();
-                const x = ((pointerX - bounds.left) / bounds.width - 0.5) * 3.6;
-                const y = ((pointerY - bounds.top) / bounds.height - 0.5) * 2.4;
-                networkVisual.style.setProperty('--network-x', `${x}px`);
-                networkVisual.style.setProperty('--network-y', `${y}px`);
-                networkFrame = 0;
-            });
-        }, { passive: true });
-        networkVisual.addEventListener('pointerleave', () => {
-            networkVisual.style.setProperty('--network-x', '0px');
-            networkVisual.style.setProperty('--network-y', '0px');
-        }, { passive: true });
-    }
-
-    // Desktop-only, canvas-based lime dust. A fixed pool cap keeps the effect
-    // bounded even during long sessions; touch and reduced-motion users skip it.
-    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (finePointer && !reducedMotion) {
-        const canvas = document.createElement('canvas');
-        canvas.className = 'serveiq-cursor-canvas';
-        canvas.setAttribute('aria-hidden', 'true');
-        document.body.append(canvas);
-        const context = canvas.getContext('2d', { alpha: true });
-        const particles = [];
-        const particleLimit = 56;
-        const pointer = { x: -100, y: -100, active: false, strong: false };
-        let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
-        let frame = 0;
-        let lastParticleAt = 0;
-        let lastX = 0;
-        let lastY = 0;
-        let lastSparkAt = 0;
-        const resizeCanvas = () => {
-            pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
-            canvas.width = Math.round(window.innerWidth * pixelRatio);
-            canvas.height = Math.round(window.innerHeight * pixelRatio);
-            canvas.style.width = `${window.innerWidth}px`;
-            canvas.style.height = `${window.innerHeight}px`;
-            if (context) context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-        };
-        const addParticle = (x, y, burst = false) => {
-            while (particles.length >= particleLimit) particles.shift();
-            const angle = Math.random() * Math.PI * 2;
-            const speed = burst ? 0.45 + Math.random() * 2.2 : 0.15 + Math.random() * 0.8;
-            particles.push({
-                x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - (burst ? .3 : .12),
-                size: burst ? 1 + Math.random() * 2.2 : .8 + Math.random() * 1.8,
-                life: 0, duration: burst ? 360 + Math.random() * 220 : 280 + Math.random() * 260,
-                alpha: .38 + Math.random() * .52, sparkle: Math.random() > .76,
-            });
-        };
-        const addClickEffect = (type, x, y) => {
-            while (particles.length >= particleLimit) particles.shift();
-            particles.push({ type, x, y, life: 0, duration: type === 'flash' ? 150 : 480, alpha: .8 });
-        };
-        const draw = now => {
-            frame = 0;
-            if (!context) return;
-            context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-            if (pointer.active) {
-                const radius = pointer.strong ? 58 : 42;
-                const glow = context.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, radius);
-                glow.addColorStop(0, `rgba(190, 255, 45, ${pointer.strong ? .19 : .12})`);
-                glow.addColorStop(.28, 'rgba(157, 231, 31, .065)');
-                glow.addColorStop(1, 'rgba(157, 231, 31, 0)');
-                context.fillStyle = glow;
-                context.beginPath();
-                context.arc(pointer.x, pointer.y, radius, 0, Math.PI * 2);
-                context.fill();
-            }
-            for (let index = particles.length - 1; index >= 0; index--) {
-                const p = particles[index];
-                p.life += 16.7;
-                const progress = Math.min(1, p.life / p.duration);
-                if (p.type === 'ripple') {
-                    context.globalAlpha = .34 * (1 - progress);
-                    context.strokeStyle = '#c6ff43';
-                    context.lineWidth = 1.5 * (1 - progress * .45);
-                    context.shadowBlur = 12;
-                    context.shadowColor = '#baff32';
-                    context.beginPath();
-                    context.arc(p.x, p.y, 5 + progress * 28, 0, Math.PI * 2);
-                    context.stroke();
-                    if (progress >= 1) particles.splice(index, 1);
-                    continue;
-                }
-                if (p.type === 'flash') {
-                    const radius = 5 + progress * 17;
-                    const flash = context.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius);
-                    flash.addColorStop(0, `rgba(220, 255, 151, ${.72 * (1 - progress)})`);
-                    flash.addColorStop(.3, `rgba(194, 255, 53, ${.36 * (1 - progress)})`);
-                    flash.addColorStop(1, 'rgba(194, 255, 53, 0)');
-                    context.fillStyle = flash;
-                    context.beginPath();
-                    context.arc(p.x, p.y, radius, 0, Math.PI * 2);
-                    context.fill();
-                    if (progress >= 1) particles.splice(index, 1);
-                    continue;
-                }
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vx *= .985;
-                p.vy = p.vy * .985 + .008;
-                const alpha = p.alpha * (1 - progress);
-                const size = p.size * (1 - progress * .72);
-                context.globalAlpha = alpha;
-                context.shadowBlur = p.sparkle ? 12 : 8;
-                context.shadowColor = '#baff32';
-                context.fillStyle = '#c6ff43';
-                context.beginPath();
-                context.arc(p.x, p.y, size, 0, Math.PI * 2);
-                context.fill();
-                if (p.sparkle && progress < .62) {
-                    context.globalAlpha = alpha * .55;
-                    context.fillRect(p.x - size * 2.1, p.y - .35, size * 4.2, .7);
-                    context.fillRect(p.x - .35, p.y - size * 2.1, .7, size * 4.2);
-                }
-                if (progress >= 1) particles.splice(index, 1);
-            }
-            context.globalAlpha = 1;
-            context.shadowBlur = 0;
-            if (particles.length) frame = requestAnimationFrame(draw);
-        };
-        const ensureFrame = () => { if (!frame) frame = requestAnimationFrame(draw); };
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas, { passive: true });
-        document.addEventListener('pointermove', event => {
-            pointer.x = event.clientX;
-            pointer.y = event.clientY;
-            pointer.active = true;
-            pointer.strong = Boolean(event.target.closest('.btn-primary, .problem-card .btn-dark'));
-            const now = performance.now();
-            const distance = Math.hypot(pointer.x - lastX, pointer.y - lastY);
-            if (distance > 3 && now - lastParticleAt > 18) {
-                lastParticleAt = now;
-                lastX = pointer.x;
-                lastY = pointer.y;
-                addParticle(pointer.x, pointer.y);
-                if (Math.random() > .72 && now - lastSparkAt > 95) {
-                    lastSparkAt = now;
-                    addParticle(pointer.x + (Math.random() - .5) * 9, pointer.y + (Math.random() - .5) * 9);
-                }
-            }
-            ensureFrame();
-        }, { passive: true });
-        document.addEventListener('pointerleave', () => {
-            pointer.active = false;
-            pointer.strong = false;
-            ensureFrame();
-        });
-        document.addEventListener('pointerdown', event => {
-            if (event.button !== 0 || event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
-            addClickEffect('flash', event.clientX, event.clientY);
-            addClickEffect('ripple', event.clientX, event.clientY);
-            for (let i = 0; i < 8; i++) addParticle(event.clientX, event.clientY, true);
-            ensureFrame();
-        }, { passive: true });
     }
 });
