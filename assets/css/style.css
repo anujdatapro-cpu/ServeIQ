@@ -2469,6 +2469,18 @@ html[data-theme="light"] .theme-toggle { background: var(--color-surface); borde
 html[data-theme="light"] .nav-account strong { color: var(--color-text-main); }
 html[data-theme="light"] .section-kicker, html[data-theme="light"] .hero-proof i,
 html[data-theme="light"] .service-dna-value, html[data-theme="light"] .fingerprint-value { color: var(--color-primary); }
+
+/* Workflow summary card dark & light contrast fixes */
+.workflow-summary-card {
+    background-color: var(--color-surface, #0f140f);
+    border-color: var(--color-line, rgba(194, 255, 53, 0.15)) !important;
+    color: var(--color-text-main, #e8ece3);
+}
+html[data-theme="light"] .workflow-summary-card {
+    background-color: #f8faf6;
+    border-color: #e2e8dc !important;
+    color: #1b211a;
+}
 @media (max-width: 767.98px) {
     body::before { opacity: .44; background-size: auto, auto, 76px 40px, 76px 40px; }
 }

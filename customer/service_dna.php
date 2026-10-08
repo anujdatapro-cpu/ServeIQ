@@ -30,7 +30,7 @@ if (!$requestId || $requestId < 1) {
 $request = $requestId ? findCustomerRequest($pdo, (int)$requestId, $customerId) : null;
 
 $message = (string)($_GET['status'] ?? '') === 'reanalyzed'
-    ? 'ServiceDNA was analyzed again. Matching was refreshed and prior assessments were invalidated.'
+    ? 'Service Analysis was updated. Matching recommendations have been refreshed.'
     : '';
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
@@ -49,11 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
             $pdo->rollBack();
         }
         error_log($exception->getMessage());
-        $error = 'ServiceDNA could not be generated right now.';
+        $error = 'Service Analysis could not be generated right now.';
     }
 }
 $dna = $requestId ? getServiceDnaForRequest($pdo, (int)$requestId) : null;
-$pageTitle = 'ServiceDNA Summary | ServeIQ';
+$pageTitle = 'Service Analysis Summary | ServeIQ';
 $basePath = '../';
 require __DIR__ . '/../includes/header.php';
 ?>
@@ -62,8 +62,8 @@ require __DIR__ . '/../includes/header.php';
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
             <div>
                 <span class="section-kicker">Customer Workspace</span>
-                <h1 class="mb-1">ServiceDNA Summary</h1>
-                <p class="text-muted mb-0">A transparent hybrid interpretation of your original problem description.</p>
+                <h1 class="mb-1">Service Analysis Summary</h1>
+                <p class="text-muted mb-0">A transparent interpretation of your problem description to help connect you with local providers.</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <?php if ($requestId): ?>
@@ -94,7 +94,7 @@ require __DIR__ . '/../includes/header.php';
             <div class="empty-state-card text-center p-5 card border-0 shadow-sm rounded-4">
                 <i class="bi bi-fingerprint fs-1 text-primary mb-3"></i>
                 <h2 class="h4">No Service Requests Found</h2>
-                <p class="text-muted mb-3">You have not submitted any service requests yet. ServiceDNA is automatically generated when you submit a problem request.</p>
+                <p class="text-muted mb-3">You have not submitted any service requests yet. Service Analysis is automatically created when you submit a problem request.</p>
                 <a href="create_request.php" class="btn btn-primary rounded-pill px-4">Describe Your Problem</a>
             </div>
         <?php else: ?>
@@ -106,19 +106,20 @@ require __DIR__ . '/../includes/header.php';
             <div class="alert alert-danger"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
 
-        <!-- Original Problem Card -->
+        <!-- What You Described -->
         <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
-            <h2 class="h5">Original Problem Description</h2>
-            <p class="request-description mb-0"><?= nl2br(htmlspecialchars($request['description'], ENT_QUOTES, 'UTF-8')) ?></p>
+            <span class="section-kicker text-muted"><i class="bi bi-chat-quote me-1"></i>What You Described</span>
+            <h2 class="h5 mb-2"><?= htmlspecialchars($request['title'], ENT_QUOTES, 'UTF-8') ?></h2>
+            <p class="request-description text-muted mb-0"><?= nl2br(htmlspecialchars($request['description'], ENT_QUOTES, 'UTF-8')) ?></p>
         </div>
 
         <?php if ($dna): ?>
-            <!-- AI Diagnostic Summary Card -->
+            <!-- What ServeIQ Understood -->
             <div class="card service-dna-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
                     <div>
-                        <span class="section-kicker">Phase 10 · Intelligence Layer</span>
-                        <h2 class="h4 mb-0">Diagnostic Interpretation</h2>
+                        <span class="section-kicker"><i class="bi bi-cpu me-1"></i>What ServeIQ Understood</span>
+                        <h2 class="h4 mb-0">Service Analysis Interpretation</h2>
                     </div>
                     <div>
                         <?php if (!empty($dna['ai_used'])): ?>
@@ -212,7 +213,7 @@ require __DIR__ . '/../includes/header.php';
                     </p>
                     <form method="POST">
                         <button type="submit" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-arrow-repeat me-1"></i>Re-analyze ServiceDNA
+                            <i class="bi bi-arrow-repeat me-1"></i>Refresh Analysis
                         </button>
                         <?= csrfField() ?>
                     </form>

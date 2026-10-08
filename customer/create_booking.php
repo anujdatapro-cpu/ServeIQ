@@ -41,20 +41,21 @@ if ($existingBooking) {
 
 $dna = getServiceDnaForRequest($pdo, (int)$requestId);
 
-// Fetch matched approved providers
-$matchStmt = $pdo->prepare(
-    "SELECT mr.provider_id, mr.match_score, mr.ranking_position, pp.business_name, pp.city, pp.area, pp.experience_years
-     FROM matching_results mr
-     INNER JOIN provider_profiles pp ON pp.id = mr.provider_id
-     WHERE mr.request_id = :request_id
-       AND mr.matching_method = 'weighted_rule_based_v1'
-       AND mr.version = 1
-       AND pp.verification_status = 'approved'
-       AND pp.availability_status <> 'offline'
-     ORDER BY mr.ranking_position ASC"
-);
-$matchStmt->execute(['request_id' => $requestId]);
-$providers = $matchStmt->fetchAll();
+// Fetch matched approved providers using matching engine
+$providers = getRankedProvidersForRequest($pdo, (int)$requestId);
+if (empty($providers)) {
+    $matchStmt = $pdo->prepare(
+        "SELECT mr.provider_id, mr.match_score, mr.ranking_position, pp.business_name, pp.city, pp.area, pp.experience_years
+         FROM matching_results mr
+         INNER JOIN provider_profiles pp ON pp.id = mr.provider_id
+         WHERE mr.request_id = :request_id
+           AND pp.verification_status = 'approved'
+           AND pp.availability_status <> 'offline'
+         ORDER BY mr.ranking_position ASC"
+    );
+    $matchStmt->execute(['request_id' => $requestId]);
+    $providers = $matchStmt->fetchAll();
+}
 
 $providerId = filter_input(INPUT_POST, 'provider_id', FILTER_VALIDATE_INT)
     ?: filter_input(INPUT_GET, 'provider_id', FILTER_VALIDATE_INT);
@@ -218,7 +219,7 @@ require __DIR__ . '/../includes/header.php';
                 </div>
                 <?php if ($dna && !empty($dna['problem_type'])): ?>
                     <div>
-                        <span class="badge text-bg-light border">ServiceDNA: <?= htmlspecialchars($dna['problem_type'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <span class="badge text-bg-light border">Service Analysis: <?= htmlspecialchars($dna['problem_type'], ENT_QUOTES, 'UTF-8') ?></span>
                     </div>
                 <?php endif; ?>
             </div>
