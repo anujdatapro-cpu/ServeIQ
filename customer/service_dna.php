@@ -30,7 +30,7 @@ if (!$requestId || $requestId < 1) {
 $request = $requestId ? findCustomerRequest($pdo, (int)$requestId, $customerId) : null;
 
 $message = (string)($_GET['status'] ?? '') === 'reanalyzed'
-    ? 'Service Analysis was refreshed. Matching was updated accordingly.'
+    ? 'Service Analysis was refreshed. Matching results were refreshed.'
     : '';
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
