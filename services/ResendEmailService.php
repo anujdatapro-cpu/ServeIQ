@@ -11,12 +11,12 @@ final class ResendEmailService implements EmailServiceInterface
         $from = getEnvVar('MAIL_FROM', getEnvVar('RESEND_FROM_EMAIL', 'onboarding@resend.dev'));
 
         if ($apiKey === '') {
-            error_log('ServeIQ Resend API key is missing or empty.');
+            error_log('[ServeIQ Email Error] Resend provider failed: RESEND_API_KEY is missing or empty.');
             return ['sent' => false, 'preview_code' => null];
         }
 
         if (!function_exists('curl_init')) {
-            error_log('ServeIQ Resend email service requires PHP cURL extension.');
+            error_log('[ServeIQ Email Error] Resend provider failed: PHP cURL extension is not enabled.');
             return ['sent' => false, 'preview_code' => null];
         }
 
@@ -57,7 +57,21 @@ final class ResendEmailService implements EmailServiceInterface
         curl_close($ch);
 
         if ($curlError || $httpCode < 200 || $httpCode >= 300) {
-            error_log("ServeIQ Resend email delivery failed (HTTP {$httpCode}): {$response} | Error: {$curlError}");
+            $sanitizedResponse = preg_replace('/"key"\s*:\s*"[^"]+"/', '"key":"***"', (string)$response);
+            error_log(sprintf(
+                '[ServeIQ Email Error] Resend API delivery failed (HTTP %d). Response: %s | cURL Error (%d): %s | Sender: %s | Recipient: %s',
+                $httpCode,
+                $sanitizedResponse,
+                $curlErrno,
+                $curlError,
+                $from,
+                $recipient
+            ));
+
+            if ($httpCode === 403 && str_contains((string)$response, 'only send testing emails')) {
+                error_log('[ServeIQ Email Notice] Resend testing domain (onboarding@resend.dev) restricts delivery to the Resend account owner\'s mailbox only. To send to arbitrary recipients, set MAIL_FROM to an address on a verified domain at resend.com/domains.');
+            }
+
             return ['sent' => false, 'preview_code' => null];
         }
 

@@ -1181,3 +1181,98 @@ html[data-theme="light"] .btn-success {
         transition-duration: .01ms !important;
     }
 }
+
+/* -------------------------------------------------------------------------
+   15. POST-LOGIN THEME ACCESSIBILITY & CONTRAST OVERRIDES
+   ------------------------------------------------------------------------- */
+.bg-light, .text-bg-light {
+    background-color: var(--color-surface-subtle) !important;
+    color: var(--color-text-main) !important;
+    border-color: var(--color-line) !important;
+}
+
+.bg-white {
+    background-color: var(--color-surface) !important;
+    color: var(--color-text-main) !important;
+}
+
+.bg-dark {
+    background-color: var(--color-bg-alt) !important;
+    color: var(--color-text-main) !important;
+}
+
+.text-dark {
+    color: var(--color-text-main) !important;
+}
+
+.text-muted {
+    color: var(--color-text-muted) !important;
+}
+
+.text-secondary {
+    color: var(--color-text-secondary) !important;
+}
+
+.badge.text-bg-light, .badge.bg-light {
+    background-color: var(--color-surface-subtle) !important;
+    color: var(--color-text-main) !important;
+    border: 1px solid var(--color-line) !important;
+}
+
+.badge.bg-light.text-dark {
+    background-color: var(--color-surface-hover) !important;
+    color: var(--color-text-main) !important;
+    border: 1px solid var(--color-line) !important;
+}
+
+.form-control, .form-select {
+    background-color: var(--color-surface) !important;
+    border: 1px solid var(--color-line) !important;
+    color: var(--color-text-main) !important;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--color-surface) !important;
+    border-color: var(--color-primary) !important;
+    color: var(--color-text-main) !important;
+    box-shadow: 0 0 0 0.25rem var(--color-accent-glow) !important;
+}
+
+.form-control::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.85;
+}
+
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--color-text-main);
+    --bs-table-border-color: var(--color-line);
+    --bs-table-hover-bg: var(--color-surface-hover);
+    color: var(--color-text-main) !important;
+}
+
+.table thead th {
+    background-color: var(--color-surface-subtle) !important;
+    color: var(--color-text-main) !important;
+    border-bottom: 1px solid var(--color-line-strong) !important;
+}
+
+.table td, .table th {
+    color: var(--color-text-main) !important;
+    border-color: var(--color-line) !important;
+}
+
+.modal-content, .dropdown-menu {
+    background-color: var(--color-surface) !important;
+    border: 1px solid var(--color-line) !important;
+    color: var(--color-text-main) !important;
+}
+
+.dropdown-item {
+    color: var(--color-text-main) !important;
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+    background-color: var(--color-surface-hover) !important;
+    color: var(--color-text-main) !important;
+}
