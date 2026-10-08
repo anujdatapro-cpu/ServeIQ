@@ -162,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $pdo->commit();
             writeAuditLog($pdo, 'request_created', 'service_request', $requestId, null, ['category_id' => $form['category_id'] === '' ? null : (int)$form['category_id'], 'status' => 'submitted']);
-            header('Location: request_details.php?id=' . $requestId . '&created=1');
+            header('Location: service_dna.php?id=' . $requestId . '&created=1');
             exit;
         } catch (Throwable $exception) {
             if ($pdo->inTransaction()) {
@@ -218,7 +218,7 @@ require __DIR__ . '/../includes/header.php';
             </section>
 
             <section class="request-section-card">
-                <div class="request-section-heading"><span class="request-step">02</span><div><h2>Help us understand better</h2><p>A category is optional. Future ServiceDNA analysis can identify it from your description.</p></div></div>
+                <div class="request-section-heading"><span class="request-step">02</span><div><h2>Help us understand better</h2><p>A category is optional. Future Service Analysis can identify it from your description.</p></div></div>
                 <label for="category_id" class="form-label">Service Category <span class="text-muted">(optional)</span></label>
                 <select id="category_id" name="category_id" class="form-select">
                     <option value="">I am not sure yet</option>

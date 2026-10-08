@@ -206,11 +206,9 @@ require __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
 
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4 pt-3 border-top">
-                    <p class="small text-muted mb-0">
-                        <strong>Engine:</strong> <?= htmlspecialchars((string)($dna['engine_version'] ?? 'rule-based-1.0'), ENT_QUOTES, 'UTF-8') ?>
-                        (<?= htmlspecialchars((string)$dna['analysis_method'], ENT_QUOTES, 'UTF-8') ?> v<?= (int)$dna['version'] ?>).
-                        Analysis is advisory and does not alter your original request text.
-                    </p>
+                    <a href="matches.php?id=<?= (int)$requestId ?>" class="btn btn-primary rounded-pill px-4">
+                        Find Recommended Providers <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
                     <form method="POST">
                         <button type="submit" class="btn btn-outline-primary btn-sm">
                             <i class="bi bi-arrow-repeat me-1"></i>Refresh Analysis
