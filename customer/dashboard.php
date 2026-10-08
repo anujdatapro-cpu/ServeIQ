@@ -42,9 +42,11 @@ $bookingCounts = $bookingCountStmt->fetch() ?: [];
 
 // Recent requests
 $recentStmt = $pdo->prepare(
-    'SELECT r.id, r.title, r.status, r.urgency, r.city, r.area, r.created_at, c.category_name
+    'SELECT r.id, r.title, r.status, r.urgency, r.city, r.area, r.created_at, COALESCE(c.category_name, fc.category_name) AS category_name
      FROM service_requests r
      LEFT JOIN service_categories c ON c.id = r.category_id
+     LEFT JOIN problem_fingerprints f ON f.request_id = r.id
+     LEFT JOIN service_categories fc ON fc.id = f.detected_category_id
      WHERE r.customer_id = :customer_id
      ORDER BY r.created_at DESC
      LIMIT 5'
