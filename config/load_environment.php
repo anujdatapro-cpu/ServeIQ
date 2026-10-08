@@ -22,7 +22,7 @@ function loadProjectEnvironment(): void
         [$name, $value] = explode('=', $line, 2);
         $name = trim($name);
         $value = trim($value);
-        if (!preg_match('/^[A-Z][A-Z0-9_]*$/', $name) || getenv($name) !== false) {
+        if (!preg_match('/^[A-Z][A-Z0-9_]*$/', $name)) {
             continue;
         }
         if (strlen($value) >= 2 && (($value[0] === '"' && str_ends_with($value, '"')) || ($value[0] === "'" && str_ends_with($value, "'")))) {
@@ -30,6 +30,7 @@ function loadProjectEnvironment(): void
         }
         putenv($name . '=' . $value);
         $_ENV[$name] = $value;
+        $_SERVER[$name] = $value;
     }
 }
 

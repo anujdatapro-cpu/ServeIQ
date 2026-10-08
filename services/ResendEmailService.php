@@ -7,11 +7,11 @@ final class ResendEmailService implements EmailServiceInterface
 {
     public function sendVerificationCode(string $recipient, string $code): array
     {
-        $apiKey = trim((string)getenv('RESEND_API_KEY'));
-        $from = trim((string)(getenv('MAIL_FROM') ?: getenv('RESEND_FROM_EMAIL') ?: 'onboarding@resend.dev'));
+        $apiKey = trim((string)(getenv('RESEND_API_KEY') ?: $_ENV['RESEND_API_KEY'] ?: $_SERVER['RESEND_API_KEY'] ?: ''));
+        $from = trim((string)(getenv('MAIL_FROM') ?: $_ENV['MAIL_FROM'] ?: $_SERVER['MAIL_FROM'] ?: getenv('RESEND_FROM_EMAIL') ?: $_ENV['RESEND_FROM_EMAIL'] ?: $_SERVER['RESEND_FROM_EMAIL'] ?: 'onboarding@resend.dev'));
 
         if ($apiKey === '') {
-            error_log('ServeIQ Resend API key is missing.');
+            error_log('ServeIQ Resend API key is missing in environment (RESEND_API_KEY).');
             return ['sent' => false, 'preview_code' => null];
         }
 
