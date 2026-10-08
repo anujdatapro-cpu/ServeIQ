@@ -97,7 +97,7 @@ require __DIR__ . '/../includes/header.php';
                     <span class="section-kicker"><i class="bi bi-chat-square-text me-1"></i>New service request</span>
                     <h2 class="h3 mb-2">What problem can we solve for you?</h2>
                     <p class="text-muted mb-3">
-                        Describe what is wrong in plain language. After you submit, ServeIQ creates a rule-based ServiceDNA summary and finds eligible providers using the available request and provider details.
+                        Describe what is wrong in plain language. After you submit, ServeIQ creates a rule-based Service Analysis summary and finds eligible providers using the available request and provider details.
                     </p>
                     <div class="mb-3">
                         <textarea id="solveTextarea" class="form-control solve-textarea" maxlength="5000" placeholder="E.g., My laptop is overheating while gaming and the fan is making a loud noise..."></textarea>
@@ -140,7 +140,7 @@ require __DIR__ . '/../includes/header.php';
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">2</span>
-                                <span><strong>ServiceDNA</strong> — Deterministic diagnostic extraction</span>
+                                <span><strong>Service Analysis</strong> — Deterministic diagnostic extraction</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">3</span>
@@ -261,7 +261,7 @@ require __DIR__ . '/../includes/header.php';
                 <div class="empty-state-saas">
                     <div class="empty-state-icon"><i class="bi bi-chat-left-dots"></i></div>
                     <h3 class="empty-state-title">No requests submitted yet</h3>
-                    <p class="empty-state-desc">Describe your first appliance or computer issue to receive automated ServiceDNA analysis and provider recommendations.</p>
+                    <p class="empty-state-desc">Describe your first appliance or computer issue to receive automated Service Analysis and provider recommendations.</p>
                     <a href="create_request.php" class="btn btn-primary">Create Service Request</a>
                 </div>
             <?php else: ?>

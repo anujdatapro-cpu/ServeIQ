@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
     }
 }
 $dna = $requestId ? getServiceDnaForRequest($pdo, (int)$requestId) : null;
-$pageTitle = 'ServiceDNA Summary | ServeIQ';
+$pageTitle = 'Service Analysis | ServeIQ';
 $basePath = '../';
 require __DIR__ . '/../includes/header.php';
 ?>

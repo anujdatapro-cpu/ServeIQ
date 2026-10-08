@@ -323,7 +323,7 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- Original Problem & ServiceDNA Cards -->
+        <!-- Original Problem & Service Analysis Cards -->
         <div class="row g-4 mb-4">
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 rounded-4 p-4 h-100">
