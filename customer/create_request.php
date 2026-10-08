@@ -218,7 +218,7 @@ require __DIR__ . '/../includes/header.php';
             </section>
 
             <section class="request-section-card">
-                <div class="request-section-heading"><span class="request-step">02</span><div><h2>Help us understand better</h2><p>A category is optional. Future ServiceDNA analysis can identify it from your description.</p></div></div>
+                <div class="request-section-heading"><span class="request-step">02</span><div><h2>Help us understand better</h2><p>A category is optional. Service Analysis can identify it from your description.</p></div></div>
                 <label for="category_id" class="form-label">Service Category <span class="text-muted">(optional)</span></label>
                 <select id="category_id" name="category_id" class="form-select">
                     <option value="">I am not sure yet</option>

@@ -41,7 +41,7 @@ $requestCancelled = $request['status'] === 'cancelled';
 $requestCompleted = $request['status'] === 'completed' || (($booking['status'] ?? '') === 'completed');
 $requestWorkflow = [
     ['label' => 'Request received', 'complete' => true],
-    ['label' => 'ServiceDNA analysis', 'complete' => $serviceDna !== null],
+    ['label' => 'Service Analysis', 'complete' => $serviceDna !== null],
     ['label' => 'Provider matching', 'complete' => $rankedProviders !== []],
     ['label' => 'Booking created', 'complete' => $booking !== null],
     ['label' => 'Service completed', 'complete' => $requestCompleted],

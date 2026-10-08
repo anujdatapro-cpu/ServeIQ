@@ -58,7 +58,7 @@ require __DIR__ . '/../includes/header.php';
             <div>
                 <span class="section-kicker">Phase 6 · Intelligent Provider Matching</span>
                 <h1 class="mb-1">Recommended Service Providers</h1>
-                <p class="text-muted mb-0">Ranked using 6-factor weighted correlation from your ServiceDNA and verified provider profiles.</p>
+                <p class="text-muted mb-0">Ranked using 6-factor weighted correlation from your Service Analysis and verified provider profiles.</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <?php if ($requestId): ?>
