@@ -177,12 +177,12 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- ServiceDNA Card -->
+        <!-- Service Analysis Card -->
         <?php if ($serviceDna): ?>
             <div class="card service-dna-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
                     <div>
-                        <span class="section-kicker">Phase 10 · ServiceDNA</span>
+                        <span class="section-kicker">Service Analysis</span>
                         <h2 class="h4 mb-1">Diagnostic Understanding</h2>
                         <p class="text-muted mb-0">Advisory service suggestions derived from your description.</p>
                     </div>

@@ -30,7 +30,7 @@ if (!$requestId || $requestId < 1) {
 $request = $requestId ? findCustomerRequest($pdo, (int)$requestId, $customerId) : null;
 
 $message = (string)($_GET['status'] ?? '') === 'reanalyzed'
-    ? 'ServiceDNA was analyzed again. Matching was refreshed and prior assessments were invalidated.'
+    ? 'Service Analysis was re-run. Matching results were refreshed.'
     : '';
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
             $pdo->rollBack();
         }
         error_log($exception->getMessage());
-        $error = 'ServiceDNA could not be generated right now.';
+        $error = 'Service Analysis could not be generated right now.';
     }
 }
 $dna = $requestId ? getServiceDnaForRequest($pdo, (int)$requestId) : null;
@@ -62,8 +62,8 @@ require __DIR__ . '/../includes/header.php';
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
             <div>
                 <span class="section-kicker">Customer Workspace</span>
-                <h1 class="mb-1">ServiceDNA Summary</h1>
-                <p class="text-muted mb-0">A transparent hybrid interpretation of your original problem description.</p>
+                <h1 class="mb-1">Service Analysis Summary</h1>
+                <p class="text-muted mb-0">A transparent interpretation of your original problem description.</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <?php if ($requestId): ?>
@@ -94,7 +94,7 @@ require __DIR__ . '/../includes/header.php';
             <div class="empty-state-card text-center p-5 card border-0 shadow-sm rounded-4">
                 <i class="bi bi-fingerprint fs-1 text-primary mb-3"></i>
                 <h2 class="h4">No Service Requests Found</h2>
-                <p class="text-muted mb-3">You have not submitted any service requests yet. ServiceDNA is automatically generated when you submit a problem request.</p>
+                <p class="text-muted mb-3">You have not submitted any service requests yet. Service Analysis is automatically generated when you submit a problem request.</p>
                 <a href="create_request.php" class="btn btn-primary rounded-pill px-4">Describe Your Problem</a>
             </div>
         <?php else: ?>
@@ -212,14 +212,14 @@ require __DIR__ . '/../includes/header.php';
                     </p>
                     <form method="POST">
                         <button type="submit" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-arrow-repeat me-1"></i>Re-analyze ServiceDNA
+                            <i class="bi bi-arrow-repeat me-1"></i>Re-analyze Service
                         </button>
                         <?= csrfField() ?>
                     </form>
                 </div>
             </div>
         <?php else: ?>
-            <div class="alert alert-info">No ServiceDNA is available yet.</div>
+            <div class="alert alert-info">No Service Analysis is available yet.</div>
         <?php endif; ?>
         <?php endif; ?>
     </div>
