@@ -12,7 +12,7 @@ final class ResendEmailService implements EmailServiceInterface
 
         if ($apiKey === '') {
             error_log('ServeIQ Resend API key is missing in environment (RESEND_API_KEY).');
-            return ['sent' => false, 'preview_code' => null];
+            return ['sent' => false, 'preview_code' => null, 'error' => 'Email service configuration error.'];
         }
 
         $url = 'https://api.resend.com/emails';
@@ -42,10 +42,17 @@ final class ResendEmailService implements EmailServiceInterface
         curl_close($ch);
 
         if ($curlError || $httpCode < 200 || $httpCode >= 300) {
-            error_log("ServeIQ Resend email delivery failed (HTTP {$httpCode}): {$response} | Error: {$curlError}");
-            return ['sent' => false, 'preview_code' => null];
+            $sanitizedResponse = is_string($response) ? preg_replace('/"key":\s*"[^"]*"/', '"key":"[REDACTED]"', $response) : '';
+            error_log("ServeIQ Resend email delivery failed for recipient {$recipient} (HTTP {$httpCode}): {$sanitizedResponse} | Error: {$curlError}");
+
+            // Check if failure is due to Resend onboarding sender domain restriction
+            if ($httpCode === 403 && str_contains((string)$response, 'testing emails')) {
+                error_log("ServeIQ Resend Note: onboarding@resend.dev restricts delivery to account owner email. A verified custom domain is required in MAIL_FROM for all recipients.");
+            }
+
+            return ['sent' => false, 'preview_code' => null, 'error' => 'Provider rejected email delivery.'];
         }
 
-        return ['sent' => true, 'preview_code' => null];
+        return ['sent' => true, 'preview_code' => null, 'error' => null];
     }
 }

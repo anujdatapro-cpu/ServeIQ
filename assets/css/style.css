@@ -839,7 +839,7 @@ a:hover {
 .hero-solve-card { background: linear-gradient(130deg, #141811, #1b2016); border: 1px solid #2b3322; border-radius: 1.3rem; color: #f1f3eb; overflow: hidden; padding: clamp(1.3rem, 3.5vw, 3rem); position: relative; }
 .hero-solve-card::before { background: radial-gradient(circle, rgba(184,225,90,.13), transparent 70%); height: 29rem; right: -6rem; top: -10rem; width: 29rem; }
 .hero-solve-card h2, .hero-solve-card h3 { color: #f1f3eb; }
-.hero-solve-card p, .hero-solve-card .text-muted, .hero-solve-card .small { color: #afb6a4 !important; }
+.hero-solve-card p, .hero-solve-card .text-muted { color: #afb6a4; }
 .hero-solve-card .section-kicker { color: #c5ed65; }
 .hero-solve-card .solve-textarea { background: #0b0e09; border-color: #363d2d; color: #f1f3eb; min-height: 9rem; }
 .hero-solve-card .solve-textarea::placeholder { color: #909888; }
@@ -2176,7 +2176,7 @@ html[data-theme="dark"] .site-footer { background: #070806; }
 .admin-dashboard .dashboard-card:hover { background: var(--color-surface-hover); box-shadow: none; transform: translateY(-1px); }
 .hero-solve-card { background: linear-gradient(130deg, #141811, #1b2016); border: 1px solid #2b3322; border-radius: 1.3rem; color: #f1f3eb; overflow: hidden; padding: clamp(1.3rem, 3.5vw, 3rem); position: relative; }
 .hero-solve-card h2, .hero-solve-card h3 { color: #f1f3eb; }
-.hero-solve-card p, .hero-solve-card .text-muted, .hero-solve-card .small { color: #afb6a4 !important; }
+.hero-solve-card p, .hero-solve-card .text-muted { color: #afb6a4; }
 .hero-solve-card .section-kicker { color: #c5ed65; }
 .hero-solve-card .solve-textarea { background: #0b0e09; border-color: #363d2d; color: #f1f3eb; min-height: 9rem; }
 .hero-solve-card .solve-textarea::placeholder { color: #909888; }
@@ -2476,10 +2476,38 @@ html[data-theme="light"] .service-dna-value, html[data-theme="light"] .fingerpri
     border-color: var(--color-line, rgba(194, 255, 53, 0.15)) !important;
     color: var(--color-text-main, #e8ece3);
 }
+.workflow-summary-card h3, .workflow-summary-card h4, .workflow-summary-card strong {
+    color: var(--color-text-main, #f5f7f1) !important;
+}
+.workflow-summary-card span, .workflow-summary-card p, .workflow-summary-card .small {
+    color: var(--color-text-secondary, #d0d5c9) !important;
+}
+html[data-theme="light"] .hero-solve-card {
+    background: linear-gradient(130deg, #f8fafc, #f1f5f9);
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+html[data-theme="light"] .hero-solve-card h2, html[data-theme="light"] .hero-solve-card h3 {
+    color: #0f172a;
+}
+html[data-theme="light"] .hero-solve-card p, html[data-theme="light"] .hero-solve-card .text-muted {
+    color: #475569 !important;
+}
+html[data-theme="light"] .hero-solve-card .solve-textarea {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
 html[data-theme="light"] .workflow-summary-card {
-    background-color: #f8faf6;
-    border-color: #e2e8dc !important;
-    color: #1b211a;
+    background-color: #ffffff;
+    border-color: #cbd5e1 !important;
+    color: #0f172a;
+}
+html[data-theme="light"] .workflow-summary-card h3, html[data-theme="light"] .workflow-summary-card strong {
+    color: #0f172a !important;
+}
+html[data-theme="light"] .workflow-summary-card span, html[data-theme="light"] .workflow-summary-card p, html[data-theme="light"] .workflow-summary-card .small {
+    color: #334155 !important;
 }
 @media (max-width: 767.98px) {
     body::before { opacity: .44; background-size: auto, auto, 76px 40px, 76px 40px; }

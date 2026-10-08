@@ -7,6 +7,7 @@ require_once __DIR__ . '/../services/EmailServiceInterface.php';
 require_once __DIR__ . '/../services/DevelopmentPreviewEmailService.php';
 require_once __DIR__ . '/../services/SmtpEmailService.php';
 require_once __DIR__ . '/../services/ResendEmailService.php';
+require_once __DIR__ . '/../services/BrevoEmailService.php';
 
 function createEmailService(): EmailServiceInterface
 {
@@ -19,6 +20,10 @@ function createEmailService(): EmailServiceInterface
 
     if ($provider === 'resend') {
         return new ResendEmailService();
+    }
+
+    if ($provider === 'brevo') {
+        return new BrevoEmailService();
     }
 
     return new SmtpEmailService();
