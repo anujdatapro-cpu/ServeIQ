@@ -27,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireValidCsrfToken();
     $fullName = trim($_POST['full_name'] ?? '');
     $email = strtolower(trim($_POST['email'] ?? ''));
-    $phone = trim($_POST['phone'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
     $role = $_POST['role'] ?? '';
@@ -35,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = array_values(validateRegistration([
         'full_name' => $fullName,
         'email' => $email,
-        'phone' => $phone,
         'password' => $password,
         'confirm_password' => $confirmPassword,
         'role' => $role,
@@ -93,7 +91,7 @@ require __DIR__ . '/includes/header.php';
 
 <main class="auth-page">
     <div class="container">
-        <aside class="auth-story" aria-label="About the ServeIQ service workflow"><a class="brand-mark" href="index.php"><span class="brand-symbol"><i class="bi bi-stars"></i></span><span>Serve<span class="brand-accent">IQ</span></span></a><span class="section-kicker">A clearer way to find help</span><h2>From a real-world problem to the right local service.</h2><p>Describe what is happening. ServeIQ organizes the details and helps you compare relevant providers.</p><div class="auth-story-flow"><span>PROBLEM</span><i class="bi bi-arrow-down"></i><span>SERVICE ANALYSIS</span><i class="bi bi-arrow-down"></i><span>PROVIDER MATCH</span></div></aside>
+        <aside class="auth-story" aria-label="About the ServeIQ service workflow"><a class="brand-mark" href="index.php"><span class="brand-symbol"><i class="bi bi-stars"></i></span><span>Serve<span class="brand-accent">IQ</span></span></a><span class="section-kicker">A clearer way to find help</span><h2>From a real-world problem to the right local service.</h2><p>Describe what is happening. ServeIQ organizes the details and helps you compare relevant providers.</p><div class="auth-story-flow"><span>PROBLEM</span><i class="bi bi-arrow-down"></i><span>ServiceDNA</span><i class="bi bi-arrow-down"></i><span>PROVIDER MATCH</span></div></aside>
         <div class="auth-panel">
             <div class="auth-header">
                 <span class="section-kicker">Join ServeIQ</span>
@@ -122,12 +120,6 @@ require __DIR__ . '/includes/header.php';
                 <div class="form-group">
                     <label for="email" class="form-label">Email Address</label>
                     <input type="email" id="email" name="email" class="form-control" value="<?= htmlspecialchars($email, ENT_QUOTES, 'UTF-8') ?>" maxlength="190" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="phone" class="form-label">Phone Number (Optional contact)</label>
-                    <input type="tel" id="phone" name="phone" class="form-control" value="<?= htmlspecialchars($phone ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="e.g. 9876543210" pattern="[6-9][0-9]{9}" maxlength="10">
-                    <small class="form-text text-muted">10-digit Indian mobile number for provider contact.</small>
                 </div>
                 
                 <div class="form-group">

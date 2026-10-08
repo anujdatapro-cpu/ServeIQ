@@ -41,8 +41,20 @@ if ($existingBooking) {
 
 $dna = getServiceDnaForRequest($pdo, (int)$requestId);
 
-// Get ranked eligible providers using centralized matching engine
-$providers = getRankedProvidersForRequest($pdo, (int)$requestId, $customerId);
+// Fetch matched approved providers
+$matchStmt = $pdo->prepare(
+    "SELECT mr.provider_id, mr.match_score, mr.ranking_position, pp.business_name, pp.city, pp.area, pp.experience_years
+     FROM matching_results mr
+     INNER JOIN provider_profiles pp ON pp.id = mr.provider_id
+     WHERE mr.request_id = :request_id
+       AND mr.matching_method = 'weighted_rule_based_v1'
+       AND mr.version = 1
+       AND pp.verification_status = 'approved'
+       AND pp.availability_status <> 'offline'
+     ORDER BY mr.ranking_position ASC"
+);
+$matchStmt->execute(['request_id' => $requestId]);
+$providers = $matchStmt->fetchAll();
 
 $providerId = filter_input(INPUT_POST, 'provider_id', FILTER_VALIDATE_INT)
     ?: filter_input(INPUT_GET, 'provider_id', FILTER_VALIDATE_INT);
@@ -206,7 +218,7 @@ require __DIR__ . '/../includes/header.php';
                 </div>
                 <?php if ($dna && !empty($dna['problem_type'])): ?>
                     <div>
-                        <span class="badge text-bg-light border">Analysis: <?= htmlspecialchars($dna['problem_type'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <span class="badge text-bg-light border">ServiceDNA: <?= htmlspecialchars($dna['problem_type'], ENT_QUOTES, 'UTF-8') ?></span>
                     </div>
                 <?php endif; ?>
             </div>
@@ -229,7 +241,7 @@ require __DIR__ . '/../includes/header.php';
                             <option value="">-- Choose from matched providers --</option>
                             <?php foreach ($providers as $p): ?>
                                 <option value="<?= (int)$p['provider_id'] ?>" <?= $providerId === (int)$p['provider_id'] ? 'selected' : '' ?>>
-                                    Rank #<?= (int)$p['ranking_position'] ?> · <?= htmlspecialchars($p['business_name'], ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars((string)round((float)($p['match_score'] ?? $p['score'] ?? 0)), ENT_QUOTES, 'UTF-8') ?>% Match)
+                                    Rank #<?= (int)$p['ranking_position'] ?> · <?= htmlspecialchars($p['business_name'], ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars((string)$p['match_score'], ENT_QUOTES, 'UTF-8') ?>/100 Match)
                                 </option>
                             <?php endforeach; ?>
                         </select>

@@ -323,7 +323,7 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- Original Problem & Service Analysis Cards -->
+        <!-- Original Problem & ServiceDNA Cards -->
         <div class="row g-4 mb-4">
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 rounded-4 p-4 h-100">
@@ -336,7 +336,7 @@ require __DIR__ . '/../includes/header.php';
 
             <div class="col-md-6">
                 <div class="card shadow-sm border-0 rounded-4 p-4 h-100">
-                    <span class="section-kicker">Service Analysis</span>
+                    <span class="section-kicker">ServiceDNA Diagnosis</span>
                     <?php if ($dna): ?>
                         <h3 class="h5 mb-2"><?= htmlspecialchars($dna['problem_type'] ?: 'Technical Request', ENT_QUOTES, 'UTF-8') ?></h3>
                         <p class="text-muted small mb-3">Entity: <?= htmlspecialchars($dna['affected_entity'] ?: 'General Hardware', ENT_QUOTES, 'UTF-8') ?></p>
@@ -345,7 +345,7 @@ require __DIR__ . '/../includes/header.php';
                         <p class="mb-1"><strong>Context:</strong> <?= htmlspecialchars(implode(', ', $dna['context']) ?: 'Standard usage', ENT_QUOTES, 'UTF-8') ?></p>
                         <p class="mb-0"><strong>Analysis Confidence:</strong> <?= (int)$dna['confidence_score'] ?>%</p>
                     <?php else: ?>
-                        <p class="text-muted mb-0">No Service Analysis recorded for this request.</p>
+                        <p class="text-muted mb-0">No ServiceDNA recorded for this request.</p>
                     <?php endif; ?>
                 </div>
             </div>

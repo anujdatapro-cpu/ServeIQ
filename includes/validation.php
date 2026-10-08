@@ -150,16 +150,11 @@ function validateRegistration(array $input): array
     $confirmation = (string)($input['confirm_password'] ?? '');
     $role = (string)($input['role'] ?? '');
 
-    $phone = trim((string)($input['phone'] ?? ''));
-
     if (!validateName($name)) {
         $errors['full_name'] = 'Enter a name using letters, spaces, apostrophes, periods, or hyphens (up to 120 characters).';
     }
     if (!validateEmail($email)) {
         $errors['email'] = 'Enter a valid email address (up to 190 characters).';
-    }
-    if ($phone !== '' && !validatePhone($phone)) {
-        $errors['phone'] = 'Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.';
     }
     if (!validatePassword($password)) {
         $errors['password'] = 'Use at least 8 characters with uppercase, lowercase, a number, and a special character.';
