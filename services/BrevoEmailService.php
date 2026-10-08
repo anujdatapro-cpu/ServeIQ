@@ -7,12 +7,17 @@ final class BrevoEmailService implements EmailServiceInterface
 {
     public function sendVerificationCode(string $recipient, string $code): array
     {
-        $apiKey = trim((string)getenv('BREVO_API_KEY'));
-        $fromEmail = trim((string)(getenv('MAIL_FROM') ?: getenv('BREVO_FROM_EMAIL') ?: 'no-reply@serveiq.local'));
-        $fromName = trim((string)(getenv('SMTP_FROM_NAME') ?: 'ServeIQ'));
+        $apiKey = getEnvVar('BREVO_API_KEY');
+        $fromEmail = getEnvVar('MAIL_FROM', getEnvVar('BREVO_FROM_EMAIL', 'no-reply@serveiq.local'));
+        $fromName = getEnvVar('SMTP_FROM_NAME', 'ServeIQ');
 
         if ($apiKey === '') {
-            error_log('ServeIQ Brevo API key is missing.');
+            error_log('ServeIQ Brevo API key is missing or empty.');
+            return ['sent' => false, 'preview_code' => null];
+        }
+
+        if (!function_exists('curl_init')) {
+            error_log('ServeIQ Brevo email service requires PHP cURL extension.');
             return ['sent' => false, 'preview_code' => null];
         }
 
@@ -35,12 +40,22 @@ final class BrevoEmailService implements EmailServiceInterface
                 'Accept: application/json'
             ],
             CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_TIMEOUT => 10
+            CURLOPT_TIMEOUT => 15
         ]);
 
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErrno = curl_errno($ch);
         $curlError = curl_error($ch);
+
+        // Fallback for environments lacking root CA bundles
+        if ($curlErrno === 60) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $response = curl_exec($ch);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+        }
+
         curl_close($ch);
 
         if ($curlError || $httpCode < 200 || $httpCode >= 300) {

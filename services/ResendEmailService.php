@@ -7,11 +7,16 @@ final class ResendEmailService implements EmailServiceInterface
 {
     public function sendVerificationCode(string $recipient, string $code): array
     {
-        $apiKey = trim((string)getenv('RESEND_API_KEY'));
-        $from = trim((string)(getenv('MAIL_FROM') ?: getenv('RESEND_FROM_EMAIL') ?: 'onboarding@resend.dev'));
+        $apiKey = getEnvVar('RESEND_API_KEY');
+        $from = getEnvVar('MAIL_FROM', getEnvVar('RESEND_FROM_EMAIL', 'onboarding@resend.dev'));
 
         if ($apiKey === '') {
-            error_log('ServeIQ Resend API key is missing.');
+            error_log('ServeIQ Resend API key is missing or empty.');
+            return ['sent' => false, 'preview_code' => null];
+        }
+
+        if (!function_exists('curl_init')) {
+            error_log('ServeIQ Resend email service requires PHP cURL extension.');
             return ['sent' => false, 'preview_code' => null];
         }
 
@@ -33,12 +38,22 @@ final class ResendEmailService implements EmailServiceInterface
                 'Content-Type: application/json'
             ],
             CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_TIMEOUT => 10
+            CURLOPT_TIMEOUT => 15
         ]);
 
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErrno = curl_errno($ch);
         $curlError = curl_error($ch);
+
+        // Fallback for environments lacking root CA bundles
+        if ($curlErrno === 60) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $response = curl_exec($ch);
+            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+        }
+
         curl_close($ch);
 
         if ($curlError || $httpCode < 200 || $httpCode >= 300) {

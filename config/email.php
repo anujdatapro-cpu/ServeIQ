@@ -11,8 +11,8 @@ require_once __DIR__ . '/../services/BrevoEmailService.php';
 
 function createEmailService(): EmailServiceInterface
 {
-    $appEnvironment = strtolower((string)(getenv('APP_ENV') ?: 'production'));
-    $provider = strtolower(trim((string)(getenv('MAIL_PROVIDER') ?: getenv('MAIL_TRANSPORT') ?: 'smtp')));
+    $appEnvironment = strtolower(getEnvVar('APP_ENV', 'production'));
+    $provider = strtolower(getEnvVar('MAIL_PROVIDER', getEnvVar('MAIL_TRANSPORT', 'smtp')));
 
     if ($appEnvironment === 'development' && ($provider === 'development_preview' || $provider === 'preview')) {
         return new DevelopmentPreviewEmailService();
