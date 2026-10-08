@@ -348,4 +348,162 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('scroll', updateNav, { passive: true });
         updateNav();
     }
+
+    // -------------------------------------------------------------------------
+    // 7. Premium Sparkling Cursor Trail & Starburst
+    // -------------------------------------------------------------------------
+    (() => {
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (prefersReducedMotion || isTouchDevice) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.id = 'serveiq-cursor-canvas';
+        canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:999999;';
+        document.body.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        const updateCanvasSize = () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', updateCanvasSize, { passive: true });
+
+        const particles = [];
+        const MAX_PARTICLES = 300;
+        const colors = ['#c2ff35', '#a3e635', '#10b981', '#ffffff', '#e4ff85'];
+
+        let lastX = -1000;
+        let lastY = -1000;
+
+        const drawStar = (ctx, x, y, outerRadius, innerRadius) => {
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                const angle = (i * Math.PI) / 4;
+                const px = x + Math.cos(angle) * radius;
+                const py = y + Math.sin(angle) * radius;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+        };
+
+        const addParticle = (x, y, isBurst = false) => {
+            if (particles.length >= MAX_PARTICLES) {
+                particles.shift();
+            }
+
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const isStar = Math.random() < (isBurst ? 0.35 : 0.18);
+            const size = isBurst ? (Math.random() * 3.5 + 1.5) : (Math.random() * 2.5 + 0.8);
+            const speedMultiplier = isBurst ? (Math.random() * 4 + 1.5) : (Math.random() * 0.8 + 0.2);
+            const angle = Math.random() * Math.PI * 2;
+
+            particles.push({
+                x,
+                y,
+                vx: Math.cos(angle) * speedMultiplier + (isBurst ? 0 : (Math.random() - 0.5) * 0.5),
+                vy: Math.sin(angle) * speedMultiplier + (isBurst ? 0 : (Math.random() - 0.5) * 0.5 + 0.2),
+                size,
+                maxSize: size,
+                color,
+                alpha: 1,
+                decay: isBurst ? (Math.random() * 0.02 + 0.015) : (Math.random() * 0.012 + 0.008),
+                isStar,
+                rotation: Math.random() * Math.PI,
+                vRot: (Math.random() - 0.5) * 0.05
+            });
+        };
+
+        window.addEventListener('mousemove', (e) => {
+            const currentX = e.clientX;
+            const currentY = e.clientY;
+            const dx = currentX - lastX;
+            const dy = currentY - lastY;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist > 3) {
+                const steps = Math.min(Math.floor(dist / 4), 6);
+                for (let i = 0; i <= steps; i++) {
+                    const px = lastX + (dx * (i / steps));
+                    const py = lastY + (dy * (i / steps));
+                    addParticle(px, py, false);
+                }
+            }
+
+            lastX = currentX;
+            lastY = currentY;
+        }, { passive: true });
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                const count = Math.floor(Math.random() * 10) + 18;
+                for (let i = 0; i < count; i++) {
+                    addParticle(e.clientX, e.clientY, true);
+                }
+            }
+        }, { passive: true });
+
+        let animationFrameId = null;
+
+        const render = () => {
+            ctx.clearRect(0, 0, width, height);
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vx *= 0.96;
+                p.vy *= 0.96;
+                p.alpha -= p.decay;
+                p.rotation += p.vRot;
+
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = p.isStar ? 6 : 3;
+
+                if (p.isStar) {
+                    drawStar(ctx, p.x, p.y, p.size * 1.8, p.size * 0.5);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * (p.alpha), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            if (!document.hidden) {
+                animationFrameId = requestAnimationFrame(render);
+            }
+        };
+
+        animationFrameId = requestAnimationFrame(render);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+            } else {
+                if (!animationFrameId) {
+                    animationFrameId = requestAnimationFrame(render);
+                }
+            }
+        });
+    })();
 });
