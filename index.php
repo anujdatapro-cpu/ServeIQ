@@ -14,7 +14,7 @@ try {
     error_log('Homepage category query failed: ' . $e->getMessage());
 }
 
-$pageTitle = 'ServeIQ | Intelligent Local Services';
+$pageTitle = 'ServeIQ | Intelligent Local Service Marketplace';
 $bodyClass = 'homepage';
 $basePath = '';
 $userRole = (string)($_SESSION['user_role'] ?? '');
@@ -25,7 +25,6 @@ $problemAction = match ($userRole) {
     'admin' => 'admin/dashboard.php',
     default => 'login.php?redirect=customer%2Fcreate_request.php',
 };
-
 $categoryIcon = static function (string $name): string {
     $name = mb_strtolower($name, 'UTF-8');
     return match (true) {
@@ -39,142 +38,233 @@ $categoryIcon = static function (string $name): string {
         default => 'bi-wrench-adjustable',
     };
 };
-
 require __DIR__ . '/includes/header.php';
 ?>
 
 <main>
     <!-- HERO SECTION -->
-    <section class="hero-section product-hero py-5">
-        <div class="hero-grid-pattern" aria-hidden="true"></div>
-        <div class="container position-relative">
+    <section class="hero-section">
+        <div class="container">
             <div class="row align-items-center g-5">
-                <!-- Hero Left: Copy & Actions -->
                 <div class="col-lg-6">
-                    <div class="eyebrow mb-3"><span class="eyebrow-dot"></span> Intelligent local services</div>
-                    <h1 class="hero-title mb-4">
-                        Describe the problem.<br>
-                        <span class="text-gradient">We'll find the right service.</span>
-                    </h1>
-                    <p class="hero-description mb-4">
-                        Tell ServeIQ what is wrong in your own words. We understand the context and connect you with relevant local service providers.
-                    </p>
-                    <div class="hero-actions d-flex flex-wrap gap-3 mb-4">
-                        <a class="btn btn-primary btn-lg rounded-pill px-4" href="#problem-box">
-                            Describe a problem <i class="bi bi-arrow-down ms-1"></i>
-                        </a>
-                        <a class="btn btn-outline-secondary btn-lg rounded-pill px-4" href="#how-it-works">
-                            How it works
-                        </a>
+                    <div class="eyebrow"><span class="eyebrow-dot"></span> Intelligent Service Marketplace</div>
+                    <h1>Describe the problem.<br><span class="text-gradient">We'll find the right service.</span></h1>
+                    <p class="hero-description">Tell ServeIQ what is wrong in your own words. ServeIQ organizes the details and connects you with relevant local service providers.</p>
+                    <div class="hero-actions d-flex flex-wrap gap-3">
+                        <a class="btn btn-primary btn-lg rounded-pill px-4" href="#problem-box">Describe a problem <i class="bi bi-arrow-down ms-1" aria-hidden="true"></i></a>
+                        <a class="btn btn-outline-secondary btn-lg rounded-pill px-4" href="#how-it-works">How it works</a>
                     </div>
-                    <div class="hero-proof d-flex align-items-center gap-2 text-muted small">
-                        <i class="bi bi-shield-check text-primary fs-5"></i>
-                        <span>Clear steps, verified local providers, and transparent request tracking.</span>
+                    <div class="hero-proof">
+                        <i class="bi bi-shield-check" aria-hidden="true"></i>
+                        <span>Structured problem analysis · Verified local professionals</span>
                     </div>
                 </div>
 
-                <!-- Hero Right: Problem Description Card or CSS Visual -->
                 <div class="col-lg-6">
-                    <div class="problem-card shadow-lg p-4 rounded-4" id="problem-box" data-preview-url="services/service_dna_preview.php" data-csrf-token="<?= htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
-                        <div class="problem-card-header d-flex align-items-center gap-2 mb-3">
-                            <span class="status-pulse"></span>
-                            <span class="fw-bold">What do you need help with?</span>
-                            <i class="bi bi-chat-square-text text-primary ms-auto fs-5"></i>
+                    <!-- ANIMATED VISUAL: PROBLEM -> ANALYZE -> MATCH -> BOOK -->
+                    <div class="hero-flow-container" aria-label="Animated service processing visual">
+                        <div class="hero-flow-header">
+                            <span class="hero-flow-title"><i class="bi bi-cpu" aria-hidden="true"></i> Service Intelligence Engine</span>
+                            <span class="hero-flow-badge">Active System Flow</span>
                         </div>
+                        <div class="hero-flow-nodes">
+                            <div class="flow-step-node is-active">
+                                <div class="flow-node-icon"><i class="bi bi-chat-left-text-fill" aria-hidden="true"></i></div>
+                                <div class="flow-node-content">
+                                    <span class="flow-node-label">1. PROBLEM</span>
+                                    <span class="flow-node-subtext">Customer describes issues in plain words</span>
+                                </div>
+                            </div>
+                            <div class="flow-node-arrow"><i class="bi bi-arrow-down-short" aria-hidden="true"></i></div>
 
+                            <div class="flow-step-node">
+                                <div class="flow-node-icon"><i class="bi bi-search" aria-hidden="true"></i></div>
+                                <div class="flow-node-content">
+                                    <span class="flow-node-label">2. ANALYZE</span>
+                                    <span class="flow-node-subtext">ServeIQ structures symptoms & urgency</span>
+                                </div>
+                            </div>
+                            <div class="flow-node-arrow"><i class="bi bi-arrow-down-short" aria-hidden="true"></i></div>
+
+                            <div class="flow-step-node">
+                                <div class="flow-node-icon"><i class="bi bi-diagram-3-fill" aria-hidden="true"></i></div>
+                                <div class="flow-node-content">
+                                    <span class="flow-node-label">3. MATCH</span>
+                                    <span class="flow-node-subtext">Relevant verified local providers ranked</span>
+                                </div>
+                            </div>
+                            <div class="flow-node-arrow"><i class="bi bi-arrow-down-short" aria-hidden="true"></i></div>
+
+                            <div class="flow-step-node">
+                                <div class="flow-node-icon"><i class="bi bi-calendar-check-fill" aria-hidden="true"></i></div>
+                                <div class="flow-node-content">
+                                    <span class="flow-node-label">4. BOOK</span>
+                                    <span class="flow-node-subtext">Schedule appointment and review work</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERACTIVE SERVICE REQUEST PANEL -->
+    <section class="section-padding bg-surface-subtle" id="problem-box">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="problem-card" data-preview-url="services/service_dna_preview.php" data-csrf-token="<?= htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                        <div class="problem-card-header">
+                            <span class="status-pulse"></span>
+                            <span>What do you need help with?</span>
+                            <i class="bi bi-chat-square-text ms-auto" aria-hidden="true"></i>
+                        </div>
                         <?php if ($canStartRequest): ?>
-                            <label for="problemDescription" class="form-label small fw-semibold">Problem description</label>
-                            <textarea id="problemDescription" class="form-control problem-textarea mb-2" maxlength="5000" aria-describedby="heroProblemHint characterCount" placeholder="For example: My laptop gets hot and the fan becomes loud after about 20 minutes of gaming."></textarea>
+                            <label for="problemDescription" class="form-label">Problem description</label>
+                            <textarea id="problemDescription" class="form-control problem-textarea" maxlength="5000" aria-describedby="heroProblemHint characterCount" placeholder="My laptop gets hot and the fan becomes loud after about 20 minutes of gaming."></textarea>
 
-                            <div class="d-flex justify-content-between gap-3 mb-3 small text-muted">
-                                <span id="heroProblemHint">A few details help providers understand the issue.</span>
+                            <div class="d-flex justify-content-between gap-3 mt-2 small text-muted">
+                                <span id="heroProblemHint">Share details like symptoms, duration, or model if known.</span>
                                 <span id="characterCount" aria-live="polite">0 / 5000</span>
                             </div>
 
-                            <div class="example-prompts d-flex flex-wrap gap-2 mb-4" aria-label="Example problem descriptions">
-                                <span class="small text-muted align-self-center me-1">Try an example:</span>
-                                <button type="button" class="quick-chip" data-problem="My laptop gets hot and the fan becomes loud during gaming.">Laptop overheating</button>
-                                <button type="button" class="quick-chip" data-problem="My air conditioner runs but does not cool the room.">AC not cooling</button>
-                                <button type="button" class="quick-chip" data-problem="My washing machine leaks water and makes a loud noise while spinning.">Washing machine leaking</button>
-                                <button type="button" class="quick-chip" data-problem="My phone screen is cracked and touch input is unreliable.">Phone screen damaged</button>
+                            <div class="example-prompts" aria-label="Example problem descriptions">
+                                <span class="small text-muted me-1">Try an example:</span>
+                                <button type="button" class="quick-chip" data-problem="My laptop gets hot and the fan becomes loud after about 20 minutes of gaming.">Laptop overheating</button>
+                                <button type="button" class="quick-chip" data-problem="Air conditioner runs but does not cool the room efficiently.">AC not cooling</button>
+                                <button type="button" class="quick-chip" data-problem="Washing machine leaks water from underneath during spin cycle.">Washing machine leaking</button>
+                                <button type="button" class="quick-chip" data-problem="Phone screen is cracked and touch input is unresponsive in some areas.">Phone screen damaged</button>
+                                <button type="button" class="quick-chip" data-problem="WiFi keeps disconnecting frequently on multiple devices.">WiFi disconnecting</button>
                             </div>
 
-                            <div class="problem-card-footer d-flex flex-wrap gap-2">
+                            <div class="problem-card-footer mt-3">
                                 <button id="problemAnalyzeButton" class="btn btn-outline-primary rounded-pill px-3" type="button">
-                                    <i class="bi bi-fingerprint me-1"></i> Preview Service Analysis
+                                    <i class="bi bi-cpu" aria-hidden="true"></i> Preview Service Analysis
                                 </button>
-                                <a id="problemSubmitLink" class="btn btn-primary rounded-pill px-4 ms-auto" href="<?= htmlspecialchars($problemAction, ENT_QUOTES, 'UTF-8') ?>">
-                                    Start request <i class="bi bi-arrow-up-right ms-1"></i>
+                                <a id="problemSubmitLink" class="btn btn-primary rounded-pill px-4" href="<?= htmlspecialchars($problemAction, ENT_QUOTES, 'UTF-8') ?>">
+                                    Start request <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
                                 </a>
                             </div>
-
                             <p id="problemValidation" class="small text-danger mb-0 mt-2" role="status" aria-live="polite"></p>
                             <div id="problemAnalysisResult" class="service-dna-preview mt-3" hidden aria-live="polite"></div>
                         <?php else: ?>
-                            <p class="text-muted">You’re signed in with a <?= htmlspecialchars($userRole, ENT_QUOTES, 'UTF-8') ?> account. Continue to your workspace to manage your ServeIQ activity.</p>
-                            <div class="problem-card-footer d-flex justify-content-between align-items-center">
-                                <span class="small text-muted">Your workspace is ready.</span>
-                                <a class="btn btn-primary rounded-pill px-4" href="<?= htmlspecialchars($problemAction, ENT_QUOTES, 'UTF-8') ?>">
-                                    Open workspace <i class="bi bi-arrow-up-right ms-1"></i>
-                                </a>
+                            <p class="text-muted">You are signed in with a <?= htmlspecialchars($userRole, ENT_QUOTES, 'UTF-8') ?> account. Continue to your workspace to manage your requests and bookings.</p>
+                            <div class="problem-card-footer">
+                                <a class="btn btn-primary rounded-pill px-4" href="<?= htmlspecialchars($problemAction, ENT_QUOTES, 'UTF-8') ?>">Open Workspace <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
                             </div>
                         <?php endif; ?>
                     </div>
-
-                    <!-- CSS Interactive Visual Flow (No Photographs) -->
-                    <div class="hero-css-visual mt-4 p-4 rounded-4 border bg-surface-subtle" aria-hidden="true">
-                        <div class="text-uppercase small fw-bold text-muted mb-3 tracking-wider">AI Service Architecture</div>
-                        <div class="hero-visual-nodes d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div class="hero-node active">
-                                <i class="bi bi-chat-square-text"></i>
-                                <span>Problem</span>
-                            </div>
-                            <div class="hero-line"></div>
-                            <div class="hero-node active">
-                                <i class="bi bi-cpu"></i>
-                                <span>Service Analysis</span>
-                            </div>
-                            <div class="hero-line"></div>
-                            <div class="hero-node">
-                                <i class="bi bi-diagram-3"></i>
-                                <span>Provider Match</span>
-                            </div>
-                            <div class="hero-line"></div>
-                            <div class="hero-node">
-                                <i class="bi bi-calendar-check"></i>
-                                <span>Book</span>
-                            </div>
-                        </div>
-                    </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS: 5-STEP WORKFLOW -->
+    <section class="section-padding" id="how-it-works">
+        <div class="container">
+            <div class="section-heading text-center mx-auto">
+                <span class="section-kicker">End-to-End Process</span>
+                <h2>How ServeIQ Works</h2>
+                <p class="section-intro mx-auto">An intelligent workflow that turns your natural language description into structured details, verified matches, and completed service.</p>
+            </div>
+
+            <div class="process-grid-5">
+                <article class="process-card">
+                    <span class="process-number">01</span>
+                    <i class="bi bi-chat-left-text process-icon" aria-hidden="true"></i>
+                    <h3>DESCRIBE</h3>
+                    <p>Tell us what is happening in plain words. Include symptoms, location, or urgency.</p>
+                </article>
+
+                <article class="process-card">
+                    <span class="process-number">02</span>
+                    <i class="bi bi-search process-icon" aria-hidden="true"></i>
+                    <h3>ANALYZE</h3>
+                    <p>ServeIQ organizes the problem context and identifies service requirements.</p>
+                </article>
+
+                <article class="process-card">
+                    <span class="process-number">03</span>
+                    <i class="bi bi-diagram-3 process-icon" aria-hidden="true"></i>
+                    <h3>MATCH</h3>
+                    <p>Relevant local service providers are ranked by location, service fit, and quality.</p>
+                </article>
+
+                <article class="process-card">
+                    <span class="process-number">04</span>
+                    <i class="bi bi-calendar-check process-icon" aria-hidden="true"></i>
+                    <h3>BOOK</h3>
+                    <p>Choose a verified provider, select an available time slot, and schedule service.</p>
+                </article>
+
+                <article class="process-card">
+                    <span class="process-number">05</span>
+                    <i class="bi bi-star-half process-icon" aria-hidden="true"></i>
+                    <h3>REVIEW</h3>
+                    <p>Review completed services to help maintain marketplace quality and transparency.</p>
+                </article>
             </div>
         </div>
     </section>
 
     <!-- PROBLEM SHIFT SECTION -->
-    <section class="problem-shift-section py-5 border-top border-bottom bg-surface-subtle" aria-labelledby="problem-shift-title">
+    <section class="section-padding bg-surface-subtle" aria-labelledby="problem-shift-title">
         <div class="container">
             <div class="row align-items-center g-4">
                 <div class="col-lg-5">
                     <span class="section-kicker">A better starting point</span>
-                    <h2 id="problem-shift-title" class="mb-3">
-                        The hard part isn't finding a service.<br>
-                        <span class="text-primary">It's finding the right one.</span>
-                    </h2>
+                    <h2 id="problem-shift-title">The hard part isn't finding a service. It's finding the right one.</h2>
                 </div>
                 <div class="col-lg-7">
-                    <div class="d-flex flex-column gap-3">
-                        <div class="p-3 rounded-3 border bg-surface d-flex align-items-center gap-3">
-                            <span class="badge bg-secondary-subtle text-muted px-2 py-1">THE USUAL WAY</span>
-                            <div class="text-muted small">Search <i class="bi bi-arrow-right mx-1"></i> Browse <i class="bi bi-arrow-right mx-1"></i> Call <i class="bi bi-arrow-right mx-1"></i> Explain <i class="bi bi-arrow-right mx-1"></i> Repeat</div>
-                        </div>
-                        <div class="p-3 rounded-3 border border-primary bg-surface d-flex align-items-center gap-3">
-                            <span class="badge bg-primary text-dark fw-bold px-2 py-1">WITH SERVEIQ</span>
-                            <div class="fw-semibold text-main small">
-                                <span class="text-primary">Describe</span> <i class="bi bi-arrow-right mx-1 text-muted"></i>
-                                <span class="text-primary">Analyze</span> <i class="bi bi-arrow-right mx-1 text-muted"></i>
-                                <span class="text-primary">Match</span> <i class="bi bi-arrow-right mx-1 text-muted"></i>
-                                <span class="text-primary">Book</span>
+                    <p class="section-intro mb-0">Describe the issue once, then move through analysis, provider matching, and booking without repeating the same search and explanation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WHY SERVEIQ / ABSTRACT SERVICE NETWORK -->
+    <section class="section-padding bg-surface-subtle" id="about">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-5">
+                    <span class="section-kicker">Intelligent Architecture</span>
+                    <h2>A clearer picture of every service request.</h2>
+                    <p class="section-intro">Traditional marketplaces rely on endless searching and repetitive phone calls. ServeIQ brings structure to service management through intelligent contextual matching.</p>
+                </div>
+                <div class="col-lg-7">
+                    <div class="abstract-flow-card">
+                        <div class="abstract-grid">
+                            <div class="abstract-item">
+                                <div class="abstract-item-icon"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></div>
+                                <div>
+                                    <div class="abstract-item-title">Context Extraction</div>
+                                    <p class="abstract-item-desc">Extracts key symptoms, affected devices, and urgency from plain language.</p>
+                                </div>
+                            </div>
+
+                            <div class="abstract-item">
+                                <div class="abstract-item-icon"><i class="bi bi-geo-alt" aria-hidden="true"></i></div>
+                                <div>
+                                    <div class="abstract-item-title">Location Alignment</div>
+                                    <p class="abstract-item-desc">Matches local providers within your city and service radius.</p>
+                                </div>
+                            </div>
+
+                            <div class="abstract-item">
+                                <div class="abstract-item-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></div>
+                                <div>
+                                    <div class="abstract-item-title">Verified Profiles</div>
+                                    <p class="abstract-item-desc">Ensures provider qualifications and active service catalog compatibility.</p>
+                                </div>
+                            </div>
+
+                            <div class="abstract-item">
+                                <div class="abstract-item-icon"><i class="bi bi-chat-dots" aria-hidden="true"></i></div>
+                                <div>
+                                    <div class="abstract-item-title">Direct Scheduling</div>
+                                    <p class="abstract-item-desc">Clear status updates from request creation through job completion.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -183,86 +273,36 @@ require __DIR__ . '/includes/header.php';
         </div>
     </section>
 
-    <!-- HOW IT WORKS (PRODUCT WORKFLOW) -->
-    <section class="section-padding py-5" id="how-it-works">
+    <!-- SERVICE CATEGORIES -->
+    <section class="section-padding" id="services">
         <div class="container">
-            <div class="text-center mx-auto mb-5" style="max-width: 680px;">
-                <span class="section-kicker">How ServeIQ Works</span>
-                <h2>A clear step-by-step workflow.</h2>
-                <p class="text-muted">From your natural description to a completed, reviewed service.</p>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-6 col-lg">
-                    <div class="card h-100 p-4 border rounded-4 text-center">
-                        <div class="step-badge mb-3 mx-auto">Step 01</div>
-                        <i class="bi bi-chat-square-text fs-2 text-primary mb-3"></i>
-                        <h3 class="h5 mb-2">Describe</h3>
-                        <p class="text-muted small mb-0">Explain the problem naturally in your own words with symptoms and location.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg">
-                    <div class="card h-100 p-4 border border-primary rounded-4 text-center bg-surface-subtle">
-                        <div class="step-badge mb-3 mx-auto bg-primary text-dark">Step 02</div>
-                        <i class="bi bi-cpu fs-2 text-primary mb-3"></i>
-                        <h3 class="h5 mb-2">Analyze</h3>
-                        <p class="text-muted small mb-0">ServeIQ structures the issue into actionable context and service requirements.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg">
-                    <div class="card h-100 p-4 border rounded-4 text-center">
-                        <div class="step-badge mb-3 mx-auto">Step 03</div>
-                        <i class="bi bi-diagram-3 fs-2 text-primary mb-3"></i>
-                        <h3 class="h5 mb-2">Match</h3>
-                        <p class="text-muted small mb-0">Compare qualified local service providers ranked by compatibility and location.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg">
-                    <div class="card h-100 p-4 border rounded-4 text-center">
-                        <div class="step-badge mb-3 mx-auto">Step 04</div>
-                        <i class="bi bi-calendar-check fs-2 text-primary mb-3"></i>
-                        <h3 class="h5 mb-2">Book</h3>
-                        <p class="text-muted small mb-0">Select your preferred provider and coordinate a convenient service appointment.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg">
-                    <div class="card h-100 p-4 border rounded-4 text-center">
-                        <div class="step-badge mb-3 mx-auto">Step 05</div>
-                        <i class="bi bi-star fs-2 text-primary mb-3"></i>
-                        <h3 class="h5 mb-2">Review</h3>
-                        <p class="text-muted small mb-0">Completed services contribute to provider ratings and verified reputation.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- SERVICE CATEGORIES SECTION -->
-    <section class="section-padding py-5 bg-surface-subtle border-top border-bottom" id="services">
-        <div class="container">
-            <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+            <div class="section-heading d-flex flex-wrap justify-content-between align-items-end gap-3">
                 <div>
-                    <span class="section-kicker">Available categories</span>
-                    <h2>Find the right kind of help.</h2>
+                    <span class="section-kicker">Active Categories</span>
+                    <h2>Find help across key service areas.</h2>
                 </div>
-                <p class="text-muted mb-0" style="max-width: 450px;">Choose a category or describe any custom issue directly in the search box above.</p>
+                <p class="section-intro mb-0">Browse active categories or describe your custom request above.</p>
             </div>
+
             <?php if ($categories === []): ?>
-                <div class="p-4 border rounded-4 bg-surface text-center text-muted">
-                    <i class="bi bi-grid-1x2 fs-2 d-block mb-2"></i>
-                    <strong>Categories are loading...</strong>
-                    <p class="mb-0 small">You can still describe your problem above to find relevant providers.</p>
+                <div class="empty-state-saas mt-4">
+                    <div class="empty-state-icon"><i class="bi bi-grid-1x2" aria-hidden="true"></i></div>
+                    <div class="empty-state-title">Categories are updating</div>
+                    <p class="empty-state-desc">You can still describe your problem directly in the input box above.</p>
                 </div>
             <?php else: ?>
-                <div class="row g-3">
+                <div class="row g-3 mt-3">
                     <?php foreach ($categories as $i => $category): ?>
                         <div class="col-12 col-sm-6 col-lg-3">
-                            <a class="category-card card p-4 h-100 text-decoration-none" href="#problem-box">
-                                <div class="category-icon-wrapper mb-3 text-primary fs-3">
-                                    <i class="bi <?= htmlspecialchars($categoryIcon((string)$category['category_name']), ENT_QUOTES, 'UTF-8') ?>"></i>
+                            <a class="category-card" href="#problem-box">
+                                <div class="category-icon">
+                                    <i class="bi <?= htmlspecialchars($categoryIcon((string)$category['category_name']), ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true"></i>
                                 </div>
-                                <h3 class="h6 mb-2 text-main"><?= htmlspecialchars((string)$category['category_name'], ENT_QUOTES, 'UTF-8') ?></h3>
-                                <p class="text-muted small mb-3 flex-grow-1"><?= htmlspecialchars((string)($category['description'] ?: 'Describe your issue to find qualified local specialists.'), ENT_QUOTES, 'UTF-8') ?></p>
-                                <span class="small fw-semibold text-primary">Describe problem <i class="bi bi-arrow-right ms-1"></i></span>
+                                <h3><?= htmlspecialchars((string)$category['category_name'], ENT_QUOTES, 'UTF-8') ?></h3>
+                                <div class="category-card-description">
+                                    <?= htmlspecialchars((string)($category['description'] ?: 'Describe your issue to explore available local providers.'), ENT_QUOTES, 'UTF-8') ?>
+                                </div>
+                                <span class="category-card-action">Describe a problem <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
                             </a>
                         </div>
                     <?php endforeach; ?>
@@ -271,88 +311,109 @@ require __DIR__ . '/includes/header.php';
         </div>
     </section>
 
-    <!-- COMMON SERVICE SCENARIOS (REPLACED PHOTOGRAPHIC IMAGE SECTION) -->
-    <section class="section-padding py-5" aria-labelledby="scenario-title">
+    <!-- COMMON SERVICE SCENARIOS -->
+    <section class="section-padding" aria-labelledby="scenario-title">
         <div class="container">
-            <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-                <div>
-                    <span class="section-kicker">Common Service Requests</span>
-                    <h2 id="scenario-title">Everyday problems start here.</h2>
-                </div>
-                <p class="text-muted mb-0" style="max-width: 450px;">Typical issue requests described by customers to connect with technicians.</p>
+            <div class="section-heading">
+                <span class="section-kicker">Common service requests</span>
+                <h2 id="scenario-title">Everyday problems start here.</h2>
             </div>
-            <div class="row g-4">
+            <div class="row g-3">
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-4 rounded-4 border bg-surface h-100 d-flex flex-column justify-content-between">
-                        <div>
-                            <i class="bi bi-laptop fs-1 text-primary d-block mb-3"></i>
-                            <span class="badge bg-primary-subtle text-primary mb-2">ELECTRONICS</span>
-                            <h3 class="h5 mb-2">Laptop Overheating</h3>
-                            <p class="text-muted small mb-0">Thermal throttling, high fan noise, and sudden shutdowns under load.</p>
+                    <article class="process-card">
+                        <i class="bi bi-laptop process-icon" aria-hidden="true"></i>
+                        <h3>Laptop overheating</h3>
+                        <p>High fan noise, thermal throttling, or sudden shutdowns under load.</p>
+                    </article>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <article class="process-card">
+                        <i class="bi bi-phone process-icon" aria-hidden="true"></i>
+                        <h3>Cracked phone screen</h3>
+                        <p>Unresponsive touch, display flickering, or damaged glass.</p>
+                    </article>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <article class="process-card">
+                        <i class="bi bi-snow process-icon" aria-hidden="true"></i>
+                        <h3>Air conditioner not cooling</h3>
+                        <p>Restricted airflow, poor cooling, or unusual system behavior.</p>
+                    </article>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <article class="process-card">
+                        <i class="bi bi-droplet process-icon" aria-hidden="true"></i>
+                        <h3>Leaking sink or drain</h3>
+                        <p>Leaks, slow drains, or low water pressure around the home.</p>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUST / WORKFLOW EXPLANATION -->
+    <section class="section-padding bg-surface-subtle" id="for-providers">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <span class="section-kicker">For Customers & Providers</span>
+                    <h2>Trust built into every step.</h2>
+                    <p class="section-intro">ServeIQ provides clear milestones for both sides of the marketplace, ensuring smooth communication and transparent status tracking.</p>
+
+                    <div class="d-flex flex-column gap-3 mt-4">
+                        <div class="d-flex gap-3 align-items-start">
+                            <span class="badge badge-status-accepted p-2"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                            <div>
+                                <strong>Understand</strong>
+                                <p class="small text-muted mb-0">Automated structured summary organizes symptoms and requirements.</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 align-items-start">
+                            <span class="badge badge-status-accepted p-2"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                            <div>
+                                <strong>Match</strong>
+                                <p class="small text-muted mb-0">Ranks local providers using service alignment and verified track records.</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 align-items-start">
+                            <span class="badge badge-status-accepted p-2"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                            <div>
+                                <strong>Book</strong>
+                                <p class="small text-muted mb-0">Seamless appointment scheduling and booking state transition management.</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 align-items-start">
+                            <span class="badge badge-status-accepted p-2"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                            <div>
+                                <strong>Complete</strong>
+                                <p class="small text-muted mb-0">Verified service completion and reviews tied strictly to finished jobs.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="p-4 rounded-4 border bg-surface h-100 d-flex flex-column justify-content-between">
-                        <div>
-                            <i class="bi bi-phone fs-1 text-primary d-block mb-3"></i>
-                            <span class="badge bg-primary-subtle text-primary mb-2">MOBILE</span>
-                            <h3 class="h5 mb-2">Cracked Phone Screen</h3>
-                            <p class="text-muted small mb-0">Unresponsive touch display, flickering OLED, or shattered glass.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="p-4 rounded-4 border bg-surface h-100 d-flex flex-column justify-content-between">
-                        <div>
-                            <i class="bi bi-snow fs-1 text-primary d-block mb-3"></i>
-                            <span class="badge bg-primary-subtle text-primary mb-2">HOME APPLIANCES</span>
-                            <h3 class="h5 mb-2">AC Not Cooling</h3>
-                            <p class="text-muted small mb-0">Refrigerant leaks, dirty filter airflow restriction, or capacitor failure.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="p-4 rounded-4 border bg-surface h-100 d-flex flex-column justify-content-between">
-                        <div>
-                            <i class="bi bi-droplet fs-1 text-primary d-block mb-3"></i>
-                            <span class="badge bg-primary-subtle text-primary mb-2">PLUMBING</span>
-                            <h3 class="h5 mb-2">Leaking Sink & Drain</h3>
-                            <p class="text-muted small mb-0">Drain blockages, worn faucet seals, or low pipe water pressure.</p>
-                        </div>
+
+                <div class="col-lg-6">
+                    <div class="abstract-flow-card text-center p-5">
+                        <i class="bi bi-briefcase text-primary display-4 mb-3" aria-hidden="true"></i>
+                        <h3>Are you a service professional?</h3>
+                        <p class="text-muted mb-4">Expand your business reach with structured incoming customer requests matched directly to your service capabilities.</p>
+                        <a class="btn btn-outline-primary rounded-pill px-4" href="register.php?role=provider">Become a Provider <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- PROVIDER CALLOUT -->
-    <section class="provider-cta-section py-5 bg-surface-subtle border-top border-bottom" id="for-providers">
+    <!-- FINAL CLOSING CTA -->
+    <section class="section-padding text-center">
         <div class="container">
-            <div class="p-4 p-md-5 rounded-4 border bg-surface d-flex flex-wrap align-items-center justify-content-between gap-4">
-                <div style="max-width: 580px;">
-                    <span class="section-kicker">For Service Professionals</span>
-                    <h2 class="h3 mb-2">Grow your local service business with ServeIQ.</h2>
-                    <p class="text-muted mb-0">Register as a provider, list your services, receive structured customer requests, and manage bookings smoothly.</p>
-                </div>
-                <a class="btn btn-primary rounded-pill px-4 btn-lg" href="register.php?role=provider">
-                    Become a provider <i class="bi bi-arrow-up-right ms-1"></i>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- CLOSING CTA -->
-    <section class="closing-cta py-5 text-center" aria-labelledby="closing-cta-title">
-        <div class="container py-4">
-            <span class="section-kicker">Get started today</span>
-            <h2 id="closing-cta-title" class="mb-4">
-                Your problem has a service solution.<br>
-                <span class="text-primary">Let's find it together.</span>
-            </h2>
-            <a class="btn btn-primary btn-lg rounded-pill px-5" href="#problem-box">
-                Describe your problem <i class="bi bi-arrow-up-right ms-1" aria-hidden="true"></i>
-            </a>
+            <span class="section-kicker">Get Started Today</span>
+            <h2 class="display-6 mb-3">Your problem has a service.<br><span class="text-gradient">Let's find it.</span></h2>
+            <p class="text-muted max-w-lg mx-auto mb-4">Start by describing what is happening in your own words.</p>
+            <a class="btn btn-primary btn-lg rounded-pill px-5" href="#problem-box">Describe your problem <i class="bi bi-arrow-up-right ms-1" aria-hidden="true"></i></a>
         </div>
     </section>
 </main>

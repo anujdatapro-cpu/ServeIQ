@@ -7,13 +7,13 @@ final class SmtpEmailService implements EmailServiceInterface
 {
     public function sendVerificationCode(string $recipient, string $code): array
     {
-        $host = trim((string)getenv('SMTP_HOST'));
-        $port = (int)(getenv('SMTP_PORT') ?: 587);
-        $username = (string)getenv('SMTP_USERNAME');
-        $password = (string)getenv('SMTP_PASSWORD');
-        $from = trim((string)getenv('SMTP_FROM_EMAIL'));
-        $fromName = trim((string)(getenv('SMTP_FROM_NAME') ?: 'ServeIQ'));
-        $encryption = strtolower(trim((string)(getenv('SMTP_ENCRYPTION') ?: 'tls')));
+        $host = getEnvVar('SMTP_HOST');
+        $port = (int)(getEnvVar('SMTP_PORT', '587'));
+        $username = getEnvVar('SMTP_USERNAME');
+        $password = getEnvVar('SMTP_PASSWORD');
+        $from = getEnvVar('SMTP_FROM_EMAIL', getEnvVar('MAIL_FROM'));
+        $fromName = getEnvVar('SMTP_FROM_NAME', 'ServeIQ');
+        $encryption = strtolower(getEnvVar('SMTP_ENCRYPTION', 'tls'));
 
         if ($host === '' || $from === '' || !filter_var($from, FILTER_VALIDATE_EMAIL)
             || !filter_var($recipient, FILTER_VALIDATE_EMAIL) || !in_array($encryption, ['tls', 'ssl'], true)) {
