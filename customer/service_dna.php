@@ -92,7 +92,7 @@ require __DIR__ . '/../includes/header.php';
 
         <?php if (!$request): ?>
             <div class="empty-state-card text-center p-5 card border-0 shadow-sm rounded-4">
-                <i class="bi bi-fingerprint fs-1 text-primary mb-3"></i>
+                <i class="bi bi-search fs-1 text-primary mb-3"></i>
                 <h2 class="h4">No Service Requests Found</h2>
                 <p class="text-muted mb-3">You have not submitted any service requests yet. Service Analysis is automatically created when you submit a problem request.</p>
                 <a href="create_request.php" class="btn btn-primary rounded-pill px-4">Describe Your Problem</a>
@@ -128,7 +128,7 @@ require __DIR__ . '/../includes/header.php';
                             </span>
                         <?php else: ?>
                             <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fs-6">
-                                <i class="bi bi-shield-check me-1"></i>Deterministic Baseline Fallback
+                                <i class="bi bi-shield-check me-1"></i>Baseline Analysis
                             </span>
                         <?php endif; ?>
                     </div>
@@ -141,7 +141,7 @@ require __DIR__ . '/../includes/header.php';
                             <strong>Analysis signals differ</strong>
                         </div>
                         <p class="mb-0 small">
-                            The enhancement layer and deterministic baseline produced different attributes. ServeIQ retained the deterministic result as the primary classification; review the original description and provider assessments when deciding what to do next.
+                            The enhancement layer and deterministic baseline produced different attributes. ServeIQ retained the baseline result as the primary classification; review the original description and provider assessments when deciding what to do next.
                         </p>
                     </div>
                 <?php endif; ?>
@@ -218,7 +218,7 @@ require __DIR__ . '/../includes/header.php';
                 </div>
             </div>
         <?php else: ?>
-            <div class="alert alert-info">No ServiceDNA is available yet.</div>
+            <div class="alert alert-info">No Service Analysis is available yet.</div>
         <?php endif; ?>
         <?php endif; ?>
     </div>

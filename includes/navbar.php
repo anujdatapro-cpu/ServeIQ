@@ -15,6 +15,7 @@ $workspaceLinks = match ($role) {
         ['Dashboard', 'customer/dashboard.php', 'bi-grid'],
         ['Create request', 'customer/create_request.php', 'bi-plus-circle'],
         ['My requests', 'customer/my_requests.php', 'bi-card-list'],
+        ['Service Analysis', 'customer/service_dna.php', 'bi-search'],
         ['Bookings', 'customer/bookings.php', 'bi-calendar-check'],
     ],
     'provider' => [

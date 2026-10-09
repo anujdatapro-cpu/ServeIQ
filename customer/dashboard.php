@@ -42,9 +42,11 @@ $bookingCounts = $bookingCountStmt->fetch() ?: [];
 
 // Recent requests
 $recentStmt = $pdo->prepare(
-    'SELECT r.id, r.title, r.status, r.urgency, r.city, r.area, r.created_at, c.category_name
+    'SELECT r.id, r.title, r.status, r.urgency, r.city, r.area, r.created_at, COALESCE(c.category_name, fc.category_name) AS category_name
      FROM service_requests r
      LEFT JOIN service_categories c ON c.id = r.category_id
+     LEFT JOIN problem_fingerprints f ON f.request_id = r.id
+     LEFT JOIN service_categories fc ON fc.id = f.detected_category_id
      WHERE r.customer_id = :customer_id
      ORDER BY r.created_at DESC
      LIMIT 5'
@@ -90,14 +92,14 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- PART E: PRIMARY PROBLEM-SOLVER HERO CARD -->
+        <!-- PRIMARY PROBLEM-SOLVER HERO CARD -->
         <div class="hero-solve-card mb-5">
             <div class="row g-4 align-items-center">
                 <div class="col-lg-7">
                     <span class="section-kicker"><i class="bi bi-chat-square-text me-1"></i>New service request</span>
                     <h2 class="h3 mb-2">What problem can we solve for you?</h2>
                     <p class="text-muted mb-3">
-                        Describe what is wrong in plain language. After you submit, ServeIQ creates a rule-based ServiceDNA summary and finds eligible providers using the available request and provider details.
+                        Describe what is wrong in plain language. After you submit, ServeIQ creates a rule-based Service Analysis summary and finds eligible providers using the available request and provider details.
                     </p>
                     <div class="mb-3">
                         <textarea id="solveTextarea" class="form-control solve-textarea" maxlength="5000" placeholder="E.g., My laptop is overheating while gaming and the fan is making a loud noise..."></textarea>
@@ -253,7 +255,7 @@ require __DIR__ . '/../includes/header.php';
                 <div class="empty-state-saas">
                     <div class="empty-state-icon"><i class="bi bi-chat-left-dots"></i></div>
                     <h3 class="empty-state-title">No requests submitted yet</h3>
-                    <p class="empty-state-desc">Describe your first appliance or computer issue to receive automated ServiceDNA analysis and provider recommendations.</p>
+                    <p class="empty-state-desc">Describe your first appliance or computer issue to receive automated Service Analysis and provider recommendations.</p>
                     <a href="create_request.php" class="btn btn-primary">Create Service Request</a>
                 </div>
             <?php else: ?>

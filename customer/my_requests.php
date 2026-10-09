@@ -43,9 +43,11 @@ if ($categoryId !== '' && ctype_digit($categoryId)) {
     $categoryId = '';
 }
 
-$sql = 'SELECT r.*, c.category_name, b.id AS booking_id, b.status AS booking_status
+$sql = 'SELECT r.*, COALESCE(c.category_name, fc.category_name) AS category_name, b.id AS booking_id, b.status AS booking_status
         FROM service_requests r 
         LEFT JOIN service_categories c ON c.id = r.category_id 
+        LEFT JOIN problem_fingerprints f ON f.request_id = r.id
+        LEFT JOIN service_categories fc ON fc.id = f.detected_category_id
         LEFT JOIN bookings b ON b.request_id = r.id
         WHERE ' . implode(' AND ', $conditions) . ' 
         ORDER BY r.created_at DESC';
@@ -86,7 +88,7 @@ require __DIR__ . '/../includes/header.php';
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                                 <div>
                                     <h2 class="h5 mb-2"><?= htmlspecialchars($request['title'], ENT_QUOTES, 'UTF-8') ?></h2>
-                                    <p class="text-muted mb-2"><?= htmlspecialchars($request['category_name'] ?: 'Category not selected', ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($request['city'], ENT_QUOTES, 'UTF-8') ?><?= $request['area'] ? ' · ' . htmlspecialchars($request['area'], ENT_QUOTES, 'UTF-8') : '' ?></p>
+                                    <p class="text-muted mb-2"><?= htmlspecialchars($request['category_name'] ?: 'Service category being analyzed', ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($request['city'], ENT_QUOTES, 'UTF-8') ?><?= $request['area'] ? ' · ' . htmlspecialchars($request['area'], ENT_QUOTES, 'UTF-8') : '' ?></p>
                                     <small class="text-muted">Created <?= htmlspecialchars(date('M j, Y g:i A', strtotime($request['created_at'])), ENT_QUOTES, 'UTF-8') ?></small>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 flex-wrap">

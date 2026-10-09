@@ -62,21 +62,30 @@ $escape = static function (string $value): string {
     return str_replace(['\\', '(', ')', "\r", "\n"], ['\\\\', '\\(', '\\)', '', ' '], $value);
 };
 
-$servicePrice = $booking['base_price'] !== null ? number_format((float)$booking['base_price'], 2) : 'Not set';
+$servicePrice = $booking['base_price'] !== null ? 'INR ' . number_format((float)$booking['base_price'], 2) : 'Estimate on visit';
 $lines = [
-    'ServeIQ | Booking Receipt',
-    'Receipt for service booking. This document is not proof of payment.',
-    'Booking: #' . (int)$booking['id'],
-    'Status: ' . bookingStatusLabel((string)$booking['status']),
-    'Customer: ' . $customerName,
-    'Provider: ' . (string)$booking['business_name'],
-    'Service: ' . (string)($booking['service_name'] ?? 'General Service'),
-    'Request: ' . (string)$booking['title'],
-    'Appointment: ' . (string)$booking['scheduled_date'] . ' ' . substr((string)$booking['scheduled_time'], 0, 5),
+    'SERVEIQ | SERVICE BOOKING RECEIPT',
+    'Intelligent Local Service Marketplace',
+    '----------------------------------------------------------------------------------------------------',
+    'Booking Reference: #' . (int)$booking['id'],
+    'Booking Status: ' . strtoupper(bookingStatusLabel((string)$booking['status'])),
+    'Payment Status: Pending / Not recorded',
+    '----------------------------------------------------------------------------------------------------',
+    'CUSTOMER DETAILS:',
+    'Name: ' . $customerName,
     'Location: ' . (string)$booking['request_city'] . (empty($booking['request_area']) ? '' : ', ' . (string)$booking['request_area']),
-    'Listed service price (INR): ' . $servicePrice,
-    'Listed rates are indicative; this receipt does not record an amount paid.',
-    'Created: ' . (string)$booking['created_at'],
+    '----------------------------------------------------------------------------------------------------',
+    'SERVICE PROVIDER:',
+    'Provider Name: ' . (string)$booking['business_name'],
+    '----------------------------------------------------------------------------------------------------',
+    'SERVICE DETAILS:',
+    'Service Name: ' . (string)($booking['service_name'] ?? 'General Service'),
+    'Request Title: ' . (string)$booking['title'],
+    'Scheduled Appointment: ' . (string)$booking['scheduled_date'] . ' at ' . substr((string)$booking['scheduled_time'], 0, 5),
+    'Total Service Charge: ' . $servicePrice,
+    '----------------------------------------------------------------------------------------------------',
+    'Note: This document confirms the service booking details recorded in ServeIQ.',
+    'It is not proof of payment unless a payment transaction is recorded.',
 ];
 $stream = "BT\n/F1 18 Tf\n50 790 Td\n(" . $escape(array_shift($lines)) . ") Tj\n/F1 10 Tf\n0 -30 Td\n";
 foreach ($lines as $line) $stream .= '(' . $escape($line) . ") Tj\n0 -24 Td\n";

@@ -7,21 +7,26 @@ final class BrevoEmailService implements EmailServiceInterface
 {
     public function sendVerificationCode(string $recipient, string $code): array
     {
-        $apiKey = trim((string)(getenv('BREVO_API_KEY') ?: ($_ENV['BREVO_API_KEY'] ?? ($_SERVER['BREVO_API_KEY'] ?? ''))));
-        $from = trim((string)(getenv('MAIL_FROM') ?: ($_ENV['MAIL_FROM'] ?? ($_SERVER['MAIL_FROM'] ?? 'noreply@serveiq.com'))));
-        $fromName = trim((string)(getenv('MAIL_FROM_NAME') ?: ($_ENV['MAIL_FROM_NAME'] ?? ($_SERVER['MAIL_FROM_NAME'] ?? 'ServeIQ Security'))));
+        $apiKey = getEnvVar('BREVO_API_KEY');
+        $fromEmail = getEnvVar('MAIL_FROM', getEnvVar('BREVO_FROM_EMAIL', 'no-reply@serveiq.local'));
+        $fromName = getEnvVar('SMTP_FROM_NAME', 'ServeIQ Security');
 
         if ($apiKey === '') {
-            error_log('ServeIQ Brevo API key is missing in environment (BREVO_API_KEY).');
-            return ['sent' => false, 'preview_code' => null, 'error' => 'Email service configuration error.'];
+            error_log('[ServeIQ Email Error] Brevo provider failed: BREVO_API_KEY is missing or empty.');
+            return ['sent' => false, 'preview_code' => null];
+        }
+
+        if (!function_exists('curl_init')) {
+            error_log('[ServeIQ Email Error] Brevo provider failed: PHP cURL extension is not enabled.');
+            return ['sent' => false, 'preview_code' => null];
         }
 
         $url = 'https://api.brevo.com/v3/smtp/email';
         $payload = [
-            'sender' => ['name' => $fromName, 'email' => $from],
+            'sender' => ['name' => $fromName, 'email' => $fromEmail],
             'to' => [['email' => $recipient]],
             'subject' => 'Your ServeIQ Email OTP Verification Code',
-            'textContent' => "Your ServeIQ verification code is {$code}. It expires in 10 minutes.",
+            'textContent' => "Your ServeIQ verification code is {$code}. It expires in 10 minutes. If you did not request this, please ignore this email.",
             'htmlContent' => "<p>Your ServeIQ verification code is <strong>{$code}</strong>.</p><p>It expires in 10 minutes.</p>"
         ];
 
@@ -35,20 +40,20 @@ final class BrevoEmailService implements EmailServiceInterface
                 'Accept: application/json'
             ],
             CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_TIMEOUT => 10
+            CURLOPT_TIMEOUT => 15
         ]);
 
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
         curl_close($ch);
 
         if ($curlError || $httpCode < 200 || $httpCode >= 300) {
             $sanitizedResponse = is_string($response) ? preg_replace('/"api-key":\s*"[^"]*"/', '"api-key":"[REDACTED]"', $response) : '';
             error_log("ServeIQ Brevo email delivery failed for recipient {$recipient} (HTTP {$httpCode}): {$sanitizedResponse} | Error: {$curlError}");
-            return ['sent' => false, 'preview_code' => null, 'error' => 'Provider rejected email delivery.'];
+            return ['sent' => false, 'preview_code' => null];
         }
 
-        return ['sent' => true, 'preview_code' => null, 'error' => null];
+        return ['sent' => true, 'preview_code' => null];
     }
 }
