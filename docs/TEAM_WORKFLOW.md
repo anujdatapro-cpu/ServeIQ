@@ -60,18 +60,27 @@ Coordinate ownership before editing shared files such as `database/serveiq.sql`,
 
 ## Resolving conflicts
 
+Before switching branches, confirm the worktree is clean or commit the work you intend to keep. Use the PR's actual base branch (`main` or `develop`), not an assumed default.
+
 ```bash
 git fetch origin
-git checkout feature/your-feature
-git merge origin/develop
+git status --short --branch
+git branch -vv
+git switch feature/your-feature
+git merge origin/<pr-base>
 ```
 
-Open each conflicted file, preserve the intended behavior from both changes, remove the conflict markers, and test the result. Then run:
+Inspect both sides of each conflict and preserve the intended behavior from both. After resolving, check the index and diff before committing:
 
 ```bash
-git add resolved-file.php
+git ls-files -u
+git diff --check
+git diff
+git add path/to/resolved-file
+git diff --cached --check
+git diff --cached
 git commit -m "chore: resolve merge conflicts"
-git push
+git push origin feature/your-feature
 ```
 
-Do not use `git reset --hard` to hide a conflict or discard a teammate's work.
+Do not use force-push or destructive reset/clean commands to hide a conflict or discard a teammate's work. Keep `.env` and local database/runtime files out of commits.

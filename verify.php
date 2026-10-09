@@ -27,7 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$result['sent']) {
                 $errors[] = (string)$result['error'];
             } else {
-                unset($_SESSION['development_otp_preview']);
+                if ($result['preview_code'] !== null) {
+                    $_SESSION['development_otp_preview'] = $result['preview_code'];
+                } else {
+                    unset($_SESSION['development_otp_preview']);
+                }
                 $notice = 'A new verification code has been sent to your email address.';
             }
         } else {
@@ -70,6 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$previewProvider = strtolower(getEnvVar('MAIL_PROVIDER', getEnvVar('MAIL_TRANSPORT', 'smtp')));
+$developmentOtpPreview = '';
+if (strtolower(getEnvVar('APP_ENV', 'production')) === 'development'
+    && in_array($previewProvider, ['development_preview', 'preview'], true)) {
+    $developmentOtpPreview = (string)($_SESSION['development_otp_preview'] ?? '');
+}
+
 $pageTitle = 'Verify email | ServeIQ';
 $basePath = '';
 require __DIR__ . '/includes/header.php';
@@ -91,6 +102,11 @@ require __DIR__ . '/includes/header.php';
             </div>
             <?php if ($notice !== ''): ?><div class="alert alert-info" role="status"><?= htmlspecialchars($notice, ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
             <?php if ($errors !== []): ?><div class="alert alert-danger" role="alert"><?= htmlspecialchars(implode(' ', $errors), ENT_QUOTES, 'UTF-8') ?></div><?php endif; ?>
+            <?php if ($developmentOtpPreview !== ''): ?>
+                <div class="alert alert-warning" role="status">
+                    Local development preview code: <strong class="font-monospace"><?= htmlspecialchars($developmentOtpPreview, ENT_QUOTES, 'UTF-8') ?></strong>
+                </div>
+            <?php endif; ?>
 
             <form method="POST" class="auth-form">
                 <?= csrfField() ?>

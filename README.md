@@ -61,6 +61,7 @@ Import `database/serveiq.sql` using phpMyAdmin or the MySQL client. The script c
 ## 10. Environment Configuration
 
 Copy `.env.example` to `.env` for local overrides. The project currently reads environment variables through PHP's built-in `getenv()` and does not require Composer or a dotenv package. Never commit `.env`.
+Email provider selection, sender precedence, and the non-delivery development preview are documented in [docs/EMAIL_CONFIGURATION.md](docs/EMAIL_CONFIGURATION.md).
 
 ## 11. Running Locally
 

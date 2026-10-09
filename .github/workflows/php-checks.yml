@@ -1,0 +1,51 @@
+name: PHP and frontend checks
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: curl, mbstring, pdo_mysql
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check PHP syntax
+        shell: bash
+        run: find . -type f -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Run standalone service tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test_file in services/*_test.php; do
+            php "$test_file"
+          done
+
+      - name: Check JavaScript syntax
+        run: node --check assets/js/main.js
+
+      - name: Check diff whitespace and conflict markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check HEAD^ HEAD
+          if git grep -n -E '^(<<<<<<<|>>>>>>>)' -- '*.php' '*.css' '*.js' '*.md' '*.yml' '*.yaml'; then
+            echo 'Unresolved merge conflict markers found.'
+            exit 1
+          fi
