@@ -58,6 +58,16 @@ function marketplaceFilterAndSortProviders(array $providers, array $filters, arr
         $eligibleServices = array_values(array_filter($provider['services'], static fn(array $service): bool =>
             $filters['category'] === null || (int)$service['category_id'] === $filters['category']
         ));
+        // If a direct search query q is provided and matches the provider's business or provider name,
+        // include active services for that provider even if category filter differs
+        if ($eligibleServices === [] && $filters['q'] !== '') {
+            $normalizedNameCorpus = matchingNormalize($provider['business_name'] . ' ' . $provider['provider_name']);
+            $normalizedQ = matchingNormalize($filters['q']);
+            $qTokens = matchingTokens($filters['q']);
+            if (str_contains($normalizedNameCorpus, $normalizedQ) || (!empty($qTokens) && count(array_intersect($qTokens, matchingTokens($normalizedNameCorpus))) === count($qTokens))) {
+                $eligibleServices = $provider['services'];
+            }
+        }
         if ($eligibleServices === []) continue;
         $prices = array_values(array_filter(array_map(static fn(array $service): ?float => $service['base_price'], $eligibleServices), static fn(?float $price): bool => $price !== null));
         $provider['starting_price'] = $prices === [] ? null : min($prices);

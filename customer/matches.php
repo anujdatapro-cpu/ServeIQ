@@ -56,17 +56,30 @@ $totalProviders = count($filteredProviders);
 
 $ineligibleNotice = '';
 if ($filters['q'] !== '' && $filteredProviders === []) {
-    $searchPattern = '%' . trim($filters['q']) . '%';
-    $checkIneligibleStmt = $pdo->prepare(
-        'SELECT pp.id, pp.business_name, pp.verification_status, pp.availability_status, pp.marketplace_active,
-                u.name AS provider_name,
-                (SELECT COUNT(*) FROM services s WHERE s.provider_id = pp.id AND s.is_active = 1) AS active_services_count
-         FROM provider_profiles pp
-         INNER JOIN users u ON u.id = pp.user_id
-         WHERE pp.business_name LIKE :q OR u.name LIKE :q
-         LIMIT 1'
-    );
-    $checkIneligibleStmt->execute(['q' => $searchPattern]);
+    $queryTokens = matchingTokens($filters['q']);
+    if (empty($queryTokens)) {
+        $queryTokens = [trim($filters['q'])];
+    }
+
+    $whereClauses = [];
+    $params = [];
+    foreach ($queryTokens as $idx => $token) {
+        $paramKey = ':token_' . $idx;
+        $whereClauses[] = '(pp.business_name LIKE ' . $paramKey . ' OR u.name LIKE ' . $paramKey . ')';
+        $params[$paramKey] = '%' . $token . '%';
+    }
+
+    $checkIneligibleSql = '
+        SELECT pp.id, pp.business_name, pp.verification_status, pp.availability_status, pp.marketplace_active,
+               u.name AS provider_name,
+               (SELECT COUNT(*) FROM services s WHERE s.provider_id = pp.id AND s.is_active = 1) AS active_services_count
+        FROM provider_profiles pp
+        INNER JOIN users u ON u.id = pp.user_id
+        WHERE ' . implode(' AND ', $whereClauses) . '
+        LIMIT 1';
+
+    $checkIneligibleStmt = $pdo->prepare($checkIneligibleSql);
+    $checkIneligibleStmt->execute($params);
     $ineligibleProvider = $checkIneligibleStmt->fetch();
 
     if ($ineligibleProvider) {
