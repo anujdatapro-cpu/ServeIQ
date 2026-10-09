@@ -45,15 +45,6 @@ final class ResendEmailService implements EmailServiceInterface
         $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlErrno = curl_errno($ch);
         $curlError = curl_error($ch);
-
-        // Fallback for environments lacking root CA bundles
-        if ($curlErrno === 60) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            $response = curl_exec($ch);
-            $httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlError = curl_error($ch);
-        }
-
         curl_close($ch);
 
         if ($curlError || $httpCode < 200 || $httpCode >= 300) {

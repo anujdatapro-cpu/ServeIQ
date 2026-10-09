@@ -208,6 +208,21 @@ require __DIR__ . '/includes/header.php';
         </div>
     </section>
 
+    <!-- PROBLEM SHIFT SECTION -->
+    <section class="section-padding bg-surface-subtle" aria-labelledby="problem-shift-title">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-5">
+                    <span class="section-kicker">A better starting point</span>
+                    <h2 id="problem-shift-title">The hard part isn't finding a service. It's finding the right one.</h2>
+                </div>
+                <div class="col-lg-7">
+                    <p class="section-intro mb-0">Describe the issue once, then move through analysis, provider matching, and booking without repeating the same search and explanation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- WHY SERVEIQ / ABSTRACT SERVICE NETWORK -->
     <section class="section-padding bg-surface-subtle" id="about">
         <div class="container">
@@ -293,6 +308,46 @@ require __DIR__ . '/includes/header.php';
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
+        </div>
+    </section>
+
+    <!-- COMMON SERVICE SCENARIOS -->
+    <section class="section-padding" aria-labelledby="scenario-title">
+        <div class="container">
+            <div class="section-heading">
+                <span class="section-kicker">Common service requests</span>
+                <h2 id="scenario-title">Everyday problems start here.</h2>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-3">
+                    <article class="process-card">
+                        <i class="bi bi-laptop process-icon" aria-hidden="true"></i>
+                        <h3>Laptop overheating</h3>
+                        <p>High fan noise, thermal throttling, or sudden shutdowns under load.</p>
+                    </article>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <article class="process-card">
+                        <i class="bi bi-phone process-icon" aria-hidden="true"></i>
+                        <h3>Cracked phone screen</h3>
+                        <p>Unresponsive touch, display flickering, or damaged glass.</p>
+                    </article>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <article class="process-card">
+                        <i class="bi bi-snow process-icon" aria-hidden="true"></i>
+                        <h3>Air conditioner not cooling</h3>
+                        <p>Restricted airflow, poor cooling, or unusual system behavior.</p>
+                    </article>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <article class="process-card">
+                        <i class="bi bi-droplet process-icon" aria-hidden="true"></i>
+                        <h3>Leaking sink or drain</h3>
+                        <p>Leaks, slow drains, or low water pressure around the home.</p>
+                    </article>
+                </div>
+            </div>
         </div>
     </section>
 
