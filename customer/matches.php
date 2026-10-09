@@ -37,6 +37,20 @@ $clarificationRequired = (bool)($fingerprintData['clarification_required'] ?? fa
 $clarificationQuestion = (string)($fingerprintData['clarification_question'] ?? '');
 $clarificationOptions = is_array($fingerprintData['clarification_options'] ?? null) ? $fingerprintData['clarification_options'] : [];
 $filters = marketplaceParseFilters($_GET, $categories, $matchingRequest);
+
+// Include candidates matching direct business/shop name or service search
+if ($filters['q'] !== '' && $requestId && $request) {
+    $existingProviderIds = array_column($allProviders, 'provider_id');
+    $allCandidates = getProviderCandidates($pdo, (int)$requestId, $customerId);
+    foreach ($allCandidates as $candidate) {
+        $cId = (int)$candidate['provider_id'];
+        if (!in_array($cId, $existingProviderIds, true)) {
+            $evaluated = array_merge($candidate, calculateProviderMatchScore($request, $candidate));
+            $allProviders[] = $evaluated;
+        }
+    }
+}
+
 $filteredProviders = marketplaceFilterAndSortProviders($allProviders, $filters, $matchingRequest);
 $totalProviders = count($filteredProviders);
 $pageSize = 10;

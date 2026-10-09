@@ -47,9 +47,26 @@ $providers = getRankedProvidersForRequest($pdo, (int)$requestId, $customerId);
 $providerId = filter_input(INPUT_POST, 'provider_id', FILTER_VALIDATE_INT)
     ?: filter_input(INPUT_GET, 'provider_id', FILTER_VALIDATE_INT);
 
-// Verify provider belongs to the matched list
+// Consistently resolve provider_profiles.id with strict profile-first precedence
+if ($providerId && $providerId > 0) {
+    $checkProfileStmt = $pdo->prepare('SELECT id FROM provider_profiles WHERE id = :pid LIMIT 1');
+    $checkProfileStmt->execute(['pid' => $providerId]);
+    $mappedProfileId = $checkProfileStmt->fetchColumn();
+
+    if ($mappedProfileId === false) {
+        $checkUserStmt = $pdo->prepare('SELECT id FROM provider_profiles WHERE user_id = :pid LIMIT 1');
+        $checkUserStmt->execute(['pid' => $providerId]);
+        $mappedProfileId = $checkUserStmt->fetchColumn();
+    }
+
+    if ($mappedProfileId !== false) {
+        $providerId = (int)$mappedProfileId;
+    }
+}
+
+// Verify provider belongs to the matched list or is an approved active provider
 $selectedProvider = null;
-if ($providerId) {
+if ($providerId && $providerId > 0) {
     foreach ($providers as $p) {
         if ((int)$p['provider_id'] === $providerId) {
             $selectedProvider = $p;
@@ -57,7 +74,13 @@ if ($providerId) {
         }
     }
     if (!$selectedProvider) {
-        $providerId = null;
+        $selectedProvider = getProviderMatchBreakdown($pdo, (int)$requestId, $providerId, $customerId);
+        if ($selectedProvider && ($selectedProvider['verification_status'] ?? '') === 'approved' && ($selectedProvider['availability_status'] ?? '') !== 'offline') {
+            $providers[] = $selectedProvider;
+        } else {
+            $selectedProvider = null;
+            $providerId = null;
+        }
     }
 }
 
