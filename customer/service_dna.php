@@ -117,7 +117,7 @@ require __DIR__ . '/../includes/header.php';
             <div class="card service-dna-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
                     <div>
-                        <span class="section-kicker">Phase 10 · Intelligence Layer</span>
+                        <span class="section-kicker">Service Analysis</span>
                         <h2 class="h4 mb-0">Diagnostic Interpretation</h2>
                     </div>
                     <div>
@@ -127,7 +127,7 @@ require __DIR__ . '/../includes/header.php';
                             </span>
                         <?php else: ?>
                             <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fs-6">
-                                <i class="bi bi-shield-check me-1"></i>Deterministic Baseline Fallback
+                                <i class="bi bi-shield-check me-1"></i>Baseline Analysis
                             </span>
                         <?php endif; ?>
                     </div>
@@ -210,12 +210,17 @@ require __DIR__ . '/../includes/header.php';
                         (<?= htmlspecialchars((string)$dna['analysis_method'], ENT_QUOTES, 'UTF-8') ?> v<?= (int)$dna['version'] ?>).
                         Analysis is advisory and does not alter your original request text.
                     </p>
-                    <form method="POST">
-                        <button type="submit" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-arrow-repeat me-1"></i>Re-analyze Service
-                        </button>
-                        <?= csrfField() ?>
-                    </form>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="matches.php?id=<?= (int)$requestId ?>" class="btn btn-primary rounded-pill px-4">
+                            Find Recommended Providers <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                        <form method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-arrow-repeat me-1"></i>Refresh Analysis
+                            </button>
+                            <?= csrfField() ?>
+                        </form>
+                    </div>
                 </div>
             </div>
         <?php else: ?>

@@ -27,7 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$result['sent']) {
                 $errors[] = (string)$result['error'];
             } else {
-                unset($_SESSION['development_otp_preview']);
+                if (!empty($result['preview_code'])) {
+                    $_SESSION['development_otp_preview'] = $result['preview_code'];
+                } else {
+                    unset($_SESSION['development_otp_preview']);
+                }
                 $notice = 'A new verification code has been sent to your email address.';
             }
         } else {
