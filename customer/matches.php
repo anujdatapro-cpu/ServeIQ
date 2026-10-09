@@ -56,7 +56,7 @@ require __DIR__ . '/../includes/header.php';
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4 pb-3 border-bottom">
             <div>
-                <span class="section-kicker">Provider Matching</span>
+                <span class="section-kicker">Phase 6 · Intelligent Provider Matching</span>
                 <h1 class="mb-1">Recommended Service Providers</h1>
                 <p class="text-muted mb-0">Ranked using 6-factor weighted correlation from your Service Analysis and verified provider profiles.</p>
             </div>

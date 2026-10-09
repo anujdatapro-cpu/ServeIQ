@@ -42,9 +42,11 @@ $bookingCounts = $bookingCountStmt->fetch() ?: [];
 
 // Recent requests
 $recentStmt = $pdo->prepare(
-    'SELECT r.id, r.title, r.status, r.urgency, r.city, r.area, r.created_at, c.category_name
+    'SELECT r.id, r.title, r.status, r.urgency, r.city, r.area, r.created_at, COALESCE(c.category_name, fc.category_name) AS category_name
      FROM service_requests r
      LEFT JOIN service_categories c ON c.id = r.category_id
+     LEFT JOIN problem_fingerprints f ON f.request_id = r.id
+     LEFT JOIN service_categories fc ON fc.id = f.detected_category_id
      WHERE r.customer_id = :customer_id
      ORDER BY r.created_at DESC
      LIMIT 5'
@@ -97,7 +99,7 @@ require __DIR__ . '/../includes/header.php';
                     <span class="section-kicker"><i class="bi bi-chat-square-text me-1"></i>New service request</span>
                     <h2 class="h3 mb-2">What problem can we solve for you?</h2>
                     <p class="text-muted mb-3">
-                        Describe what is wrong in plain language. After you submit, ServeIQ creates a rule-based ServiceDNA summary and finds eligible providers using the available request and provider details.
+                        Describe what is wrong in plain language. After you submit, ServeIQ creates a rule-based Service Analysis summary and finds eligible providers using the available request and provider details.
                     </p>
                     <div class="mb-3">
                         <textarea id="solveTextarea" class="form-control solve-textarea" maxlength="5000" placeholder="E.g., My laptop is overheating while gaming and the fan is making a loud noise..."></textarea>
@@ -129,30 +131,38 @@ require __DIR__ . '/../includes/header.php';
                 </div>
 
                 <div class="col-lg-5">
-                    <div class="p-3 workflow-summary-card rounded-4 border">
-                        <span class="section-kicker text-primary"><i class="bi bi-diagram-3 me-1"></i>ServeIQ Problem-Solving Workflow</span>
+                    <div class="p-3 bg-light rounded-4 border">
+                        <span class="section-kicker text-primary"><i class="bi bi-diagram-3 me-1"></i>ServeIQ 7-Stage Pipeline</span>
                         <h3 class="h6 mb-3">How Your Problem Gets Resolved</h3>
                         
                         <div class="d-flex flex-column gap-2 small">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">1</span>
-                                <span><strong>Describe Problem</strong> — Natural language problem description</span>
+                                <span><strong>Problem Description</strong> — Natural language input</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">2</span>
-                                <span><strong>Service Analysis</strong> — Category, symptoms &amp; urgency context</span>
+                                <span><strong>Service Analysis</strong> — Deterministic diagnostic extraction</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">3</span>
-                                <span><strong>Provider Matching</strong> — Verified local provider ranking</span>
+                                <span><strong>Optional enhancement</strong> — A local rule-enhanced layer may add context and follow-up questions</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">4</span>
-                                <span><strong>Book Service</strong> — Schedule appointment time</span>
+                                <span><strong>Provider Matching</strong> — 6-factor weighted ranking</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-success rounded-circle p-1" style="width: 22px; height: 22px;">5</span>
-                                <span><strong>Trust &amp; Review</strong> — Rate completed service quality</span>
+                                <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">5</span>
+                                <span><strong>ADCS Consensus</strong> — Independent provider consensus</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">6</span>
+                                <span><strong>Service Booking</strong> — 4-stage booking state lifecycle</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-success rounded-circle p-1" style="width: 22px; height: 22px;">7</span>
+                                <span><strong>Trust &amp; Review</strong> — Verified customer ratings</span>
                             </div>
                         </div>
                     </div>
@@ -253,7 +263,7 @@ require __DIR__ . '/../includes/header.php';
                 <div class="empty-state-saas">
                     <div class="empty-state-icon"><i class="bi bi-chat-left-dots"></i></div>
                     <h3 class="empty-state-title">No requests submitted yet</h3>
-                    <p class="empty-state-desc">Describe your first appliance or computer issue to receive automated ServiceDNA analysis and provider recommendations.</p>
+                    <p class="empty-state-desc">Describe your first appliance or computer issue to receive automated Service Analysis and provider recommendations.</p>
                     <a href="create_request.php" class="btn btn-primary">Create Service Request</a>
                 </div>
             <?php else: ?>

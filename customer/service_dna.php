@@ -30,7 +30,7 @@ if (!$requestId || $requestId < 1) {
 $request = $requestId ? findCustomerRequest($pdo, (int)$requestId, $customerId) : null;
 
 $message = (string)($_GET['status'] ?? '') === 'reanalyzed'
-    ? 'Service Analysis was updated. Matching recommendations have been refreshed.'
+    ? 'Service Analysis was refreshed. Matching results were refreshed.'
     : '';
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $requestId && $request) {
     }
 }
 $dna = $requestId ? getServiceDnaForRequest($pdo, (int)$requestId) : null;
-$pageTitle = 'Service Analysis Summary | ServeIQ';
+$pageTitle = 'Service Analysis | ServeIQ';
 $basePath = '../';
 require __DIR__ . '/../includes/header.php';
 ?>
@@ -63,7 +63,7 @@ require __DIR__ . '/../includes/header.php';
             <div>
                 <span class="section-kicker">Customer Workspace</span>
                 <h1 class="mb-1">Service Analysis Summary</h1>
-                <p class="text-muted mb-0">A transparent interpretation of your problem description to help connect you with local providers.</p>
+                <p class="text-muted mb-0">A transparent interpretation of your original problem description.</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
                 <?php if ($requestId): ?>
@@ -92,9 +92,9 @@ require __DIR__ . '/../includes/header.php';
 
         <?php if (!$request): ?>
             <div class="empty-state-card text-center p-5 card border-0 shadow-sm rounded-4">
-                <i class="bi bi-fingerprint fs-1 text-primary mb-3"></i>
+                <i class="bi bi-search fs-1 text-primary mb-3"></i>
                 <h2 class="h4">No Service Requests Found</h2>
-                <p class="text-muted mb-3">You have not submitted any service requests yet. Service Analysis is automatically created when you submit a problem request.</p>
+                <p class="text-muted mb-3">You have not submitted any service requests yet. Service Analysis is automatically generated when you submit a problem request.</p>
                 <a href="create_request.php" class="btn btn-primary rounded-pill px-4">Describe Your Problem</a>
             </div>
         <?php else: ?>
@@ -106,20 +106,19 @@ require __DIR__ . '/../includes/header.php';
             <div class="alert alert-danger"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
 
-        <!-- What You Described -->
+        <!-- Original Problem Card -->
         <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
-            <span class="section-kicker text-muted"><i class="bi bi-chat-quote me-1"></i>What You Described</span>
-            <h2 class="h5 mb-2"><?= htmlspecialchars($request['title'], ENT_QUOTES, 'UTF-8') ?></h2>
-            <p class="request-description text-muted mb-0"><?= nl2br(htmlspecialchars($request['description'], ENT_QUOTES, 'UTF-8')) ?></p>
+            <h2 class="h5">Original Problem Description</h2>
+            <p class="request-description mb-0"><?= nl2br(htmlspecialchars($request['description'], ENT_QUOTES, 'UTF-8')) ?></p>
         </div>
 
         <?php if ($dna): ?>
-            <!-- What ServeIQ Understood -->
+            <!-- Diagnostic Summary Card -->
             <div class="card service-dna-panel shadow-sm border-0 rounded-4 p-4 p-md-5 mb-4">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
                     <div>
-                        <span class="section-kicker"><i class="bi bi-cpu me-1"></i>What ServeIQ Understood</span>
-                        <h2 class="h4 mb-0">Service Analysis Interpretation</h2>
+                        <span class="section-kicker">Service Analysis</span>
+                        <h2 class="h4 mb-0">Diagnostic Interpretation</h2>
                     </div>
                     <div>
                         <?php if (!empty($dna['ai_used'])): ?>
@@ -128,7 +127,7 @@ require __DIR__ . '/../includes/header.php';
                             </span>
                         <?php else: ?>
                             <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fs-6">
-                                <i class="bi bi-shield-check me-1"></i>Deterministic Baseline Fallback
+                                <i class="bi bi-shield-check me-1"></i>Baseline Analysis
                             </span>
                         <?php endif; ?>
                     </div>
@@ -141,7 +140,7 @@ require __DIR__ . '/../includes/header.php';
                             <strong>Analysis signals differ</strong>
                         </div>
                         <p class="mb-0 small">
-                            The enhancement layer and deterministic baseline produced different attributes. ServeIQ retained the deterministic result as the primary classification; review the original description and provider assessments when deciding what to do next.
+                            The enhancement layer and deterministic baseline produced different attributes. ServeIQ retained the baseline result as the primary classification; review the original description and provider assessments when deciding what to do next.
                         </p>
                     </div>
                 <?php endif; ?>
@@ -206,19 +205,25 @@ require __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
 
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4 pt-3 border-top">
-                    <a href="matches.php?id=<?= (int)$requestId ?>" class="btn btn-primary rounded-pill px-4">
-                        Find Recommended Providers <i class="bi bi-arrow-right ms-1"></i>
-                    </a>
-                    <form method="POST">
-                        <button type="submit" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-arrow-repeat me-1"></i>Refresh Analysis
-                        </button>
-                        <?= csrfField() ?>
-                    </form>
+                    <p class="small text-muted mb-0">
+                        <strong>Engine:</strong> <?= htmlspecialchars((string)($dna['engine_version'] ?? 'rule-based-1.0'), ENT_QUOTES, 'UTF-8') ?>.
+                        Analysis is advisory and does not alter your original request text.
+                    </p>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="matches.php?id=<?= (int)$requestId ?>" class="btn btn-primary rounded-pill px-4">
+                            Find Recommended Providers <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                        <form method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-arrow-repeat me-1"></i>Refresh Analysis
+                            </button>
+                            <?= csrfField() ?>
+                        </form>
+                    </div>
                 </div>
             </div>
         <?php else: ?>
-            <div class="alert alert-info">No ServiceDNA is available yet.</div>
+            <div class="alert alert-info">No Service Analysis is available yet.</div>
         <?php endif; ?>
         <?php endif; ?>
     </div>

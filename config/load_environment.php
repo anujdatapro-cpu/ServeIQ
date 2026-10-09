@@ -1,7 +1,23 @@
 <?php
 declare(strict_types=1);
 
-/** Load simple KEY=VALUE entries from the project .env without overriding server configuration. */
+/** Safely retrieve an environment variable from getenv(), $_ENV, or $_SERVER. */
+function getEnvVar(string $name, string $default = ''): string
+{
+    $val = getenv($name);
+    if ($val !== false && trim((string)$val) !== '') {
+        return trim((string)$val);
+    }
+    if (isset($_ENV[$name]) && trim((string)$_ENV[$name]) !== '') {
+        return trim((string)$_ENV[$name]);
+    }
+    if (isset($_SERVER[$name]) && trim((string)$_SERVER[$name]) !== '') {
+        return trim((string)$_SERVER[$name]);
+    }
+    return $default;
+}
+
+/** Load simple KEY=VALUE entries from the project .env without overriding non-empty server configuration. */
 function loadProjectEnvironment(): void
 {
     static $loaded = false;
@@ -23,6 +39,10 @@ function loadProjectEnvironment(): void
         $name = trim($name);
         $value = trim($value);
         if (!preg_match('/^[A-Z][A-Z0-9_]*$/', $name)) {
+            continue;
+        }
+        $existing = getenv($name);
+        if ($existing !== false && trim((string)$existing) !== '') {
             continue;
         }
         if (strlen($value) >= 2 && (($value[0] === '"' && str_ends_with($value, '"')) || ($value[0] === "'" && str_ends_with($value, "'")))) {
