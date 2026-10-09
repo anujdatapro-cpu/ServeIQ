@@ -53,6 +53,43 @@ if ($filters['q'] !== '' && $requestId && $request) {
 
 $filteredProviders = marketplaceFilterAndSortProviders($allProviders, $filters, $matchingRequest);
 $totalProviders = count($filteredProviders);
+
+$ineligibleNotice = '';
+if ($filters['q'] !== '' && $filteredProviders === []) {
+    $searchPattern = '%' . trim($filters['q']) . '%';
+    $checkIneligibleStmt = $pdo->prepare(
+        'SELECT pp.id, pp.business_name, pp.verification_status, pp.availability_status, pp.marketplace_active,
+                u.name AS provider_name,
+                (SELECT COUNT(*) FROM services s WHERE s.provider_id = pp.id AND s.is_active = 1) AS active_services_count
+         FROM provider_profiles pp
+         INNER JOIN users u ON u.id = pp.user_id
+         WHERE pp.business_name LIKE :q OR u.name LIKE :q
+         LIMIT 1'
+    );
+    $checkIneligibleStmt->execute(['q' => $searchPattern]);
+    $ineligibleProvider = $checkIneligibleStmt->fetch();
+
+    if ($ineligibleProvider) {
+        $reasons = [];
+        if ($ineligibleProvider['verification_status'] !== 'approved') {
+            $reasons[] = 'profile verification is ' . $ineligibleProvider['verification_status'];
+        }
+        if ($ineligibleProvider['availability_status'] === 'offline') {
+            $reasons[] = 'provider status is currently offline';
+        }
+        if ((int)$ineligibleProvider['marketplace_active'] !== 1) {
+            $reasons[] = 'marketplace listing is inactive';
+        }
+        if ((int)$ineligibleProvider['active_services_count'] === 0) {
+            $reasons[] = 'no active services are currently listed';
+        }
+
+        if ($reasons !== []) {
+            $ineligibleNotice = 'The provider "' . htmlspecialchars($ineligibleProvider['business_name'], ENT_QUOTES, 'UTF-8') . '" was found in the database, but cannot be booked at this time because ' . htmlspecialchars(implode(', ', $reasons), ENT_QUOTES, 'UTF-8') . '.';
+        }
+    }
+}
+
 $pageSize = 10;
 $pageCount = max(1, (int)ceil($totalProviders / $pageSize));
 $filters['page'] = min($filters['page'], $pageCount);
@@ -121,7 +158,7 @@ require __DIR__ . '/../includes/header.php';
             <div class="collapse show" id="marketplaceFilterBody">
                 <form method="GET" class="row g-3 align-items-end">
                     <input type="hidden" name="id" value="<?= (int)$requestId ?>">
-                    <div class="col-12 col-md-6 col-lg-3"><label for="filter_q" class="form-label">Search providers</label><input id="filter_q" name="q" class="form-control" maxlength="80" value="<?= htmlspecialchars($filters['q'], ENT_QUOTES, 'UTF-8') ?>" placeholder="Service, business or area"></div>
+                    <div class="col-12 col-md-6 col-lg-3"><label for="filter_q" class="form-label">Search by business/shop name</label><input id="filter_q" name="q" class="form-control" maxlength="80" value="<?= htmlspecialchars($filters['q'], ENT_QUOTES, 'UTF-8') ?>" placeholder="Business name, service, or area"></div>
                     <div class="col-12 col-md-6 col-lg-3"><label for="filter_sort" class="form-label">Sort by</label><select id="filter_sort" name="sort" class="form-select"><option value="best_match" <?= $filters['sort'] === 'best_match' ? 'selected' : '' ?>>Best match</option><option value="nearest" <?= $filters['sort'] === 'nearest' ? 'selected' : '' ?>>Nearest</option><option value="price_low" <?= $filters['sort'] === 'price_low' ? 'selected' : '' ?>>Lowest price</option><option value="price_high" <?= $filters['sort'] === 'price_high' ? 'selected' : '' ?>>Highest price</option><option value="highest_rated" <?= $filters['sort'] === 'highest_rated' ? 'selected' : '' ?>>Highest rated</option><option value="fastest" <?= $filters['sort'] === 'fastest' ? 'selected' : '' ?>>Fastest response estimate</option></select></div>
                     <div class="col-6 col-lg-2"><label for="filter_min_price" class="form-label">Min price (₹)</label><input id="filter_min_price" name="min_price" type="number" min="0" max="100000" step="1" class="form-control" value="<?= $filters['min_price'] !== null ? htmlspecialchars((string)$filters['min_price'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
                     <div class="col-6 col-lg-2"><label for="filter_max_price" class="form-label">Max price (₹)</label><input id="filter_max_price" name="max_price" type="number" min="0" max="100000" step="1" class="form-control" value="<?= $filters['max_price'] !== null ? htmlspecialchars((string)$filters['max_price'], ENT_QUOTES, 'UTF-8') : '' ?>"></div>
@@ -180,7 +217,20 @@ require __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
             </div>
         <?php elseif ($filteredProviders === []): ?>
-            <div class="empty-state-saas"><div class="empty-state-icon"><i class="bi bi-sliders"></i></div><h3 class="empty-state-title">No providers match these filters</h3><p class="empty-state-desc">Clear one or more filters to see more providers for this request.</p><a href="matches.php?id=<?= (int)$requestId ?>" class="btn btn-primary">Clear filters</a></div>
+            <div class="empty-state-saas">
+                <div class="empty-state-icon"><i class="bi bi-sliders"></i></div>
+                <h3 class="empty-state-title">No providers match these filters</h3>
+                <?php if ($ineligibleNotice !== ''): ?>
+                    <div class="alert alert-warning border-0 rounded-4 text-start mb-3" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i><?= $ineligibleNotice ?>
+                    </div>
+                <?php elseif ($filters['q'] !== ''): ?>
+                    <p class="empty-state-desc">No provider or business matching "<strong><?= htmlspecialchars($filters['q'], ENT_QUOTES, 'UTF-8') ?></strong>" was found in the database. Clear search or try a different term.</p>
+                <?php else: ?>
+                    <p class="empty-state-desc">Clear one or more filters to see more providers for this request.</p>
+                <?php endif; ?>
+                <a href="matches.php?id=<?= (int)$requestId ?>" class="btn btn-primary">Clear filters</a>
+            </div>
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($providers as $provider): ?>
