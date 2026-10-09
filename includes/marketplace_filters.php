@@ -92,7 +92,21 @@ function marketplaceFilterAndSortProviders(array $providers, array $filters, arr
             $matchesSubstring = str_contains($normalizedCorpus, $normalizedQuery);
             $matchesTokens = !empty($queryTokens) && count(array_intersect($queryTokens, matchingTokens($normalizedCorpus))) === count($queryTokens);
 
-            if (!$matchesSubstring && !$matchesTokens) {
+            // Flexible stem/prefix matching for variant word forms (e.g. cleaner vs cleaning)
+            $matchesStems = false;
+            if (!$matchesSubstring && !$matchesTokens && !empty($queryTokens)) {
+                $stemMatches = 0;
+                foreach ($queryTokens as $qToken) {
+                    if (str_contains($normalizedCorpus, $qToken)) {
+                        $stemMatches++;
+                    } elseif (mb_strlen($qToken) >= 4 && str_contains($normalizedCorpus, mb_substr($qToken, 0, 4))) {
+                        $stemMatches++;
+                    }
+                }
+                $matchesStems = ($stemMatches === count($queryTokens));
+            }
+
+            if (!$matchesSubstring && !$matchesTokens && !$matchesStems) {
                 continue;
             }
         }

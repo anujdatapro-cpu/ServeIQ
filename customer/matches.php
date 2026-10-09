@@ -163,7 +163,7 @@ require __DIR__ . '/../includes/header.php';
             </div>
         <?php else: ?>
 
-        <?php if ($allProviders !== []): ?><section class="marketplace-filters card border-0 shadow-sm rounded-4 p-3 p-lg-4 mb-4" aria-labelledby="filterHeading">
+        <?php if ($request): ?><section class="marketplace-filters card border-0 shadow-sm rounded-4 p-3 p-lg-4 mb-4" aria-labelledby="filterHeading">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                 <div><h2 class="h5 mb-1" id="filterHeading">Find the right provider</h2><p class="small text-muted mb-0"><?= (int)$totalProviders ?> matching provider<?= $totalProviders === 1 ? '' : 's' ?> after filters</p></div>
                 <button class="btn btn-outline-primary d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#marketplaceFilterBody" aria-expanded="false" aria-controls="marketplaceFilterBody">Filters &amp; sort</button>
