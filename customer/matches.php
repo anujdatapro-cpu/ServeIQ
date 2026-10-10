@@ -56,50 +56,54 @@ $totalProviders = count($filteredProviders);
 
 $ineligibleNotice = '';
 if ($filters['q'] !== '' && $filteredProviders === []) {
-    $queryTokens = matchingTokens($filters['q']);
-    if (empty($queryTokens)) {
-        $queryTokens = [trim($filters['q'])];
-    }
-
-    $whereClauses = [];
-    $params = [];
-    foreach ($queryTokens as $idx => $token) {
-        $paramKey = ':token_' . $idx;
-        $whereClauses[] = '(pp.business_name LIKE ' . $paramKey . ' OR u.name LIKE ' . $paramKey . ')';
-        $params[$paramKey] = '%' . $token . '%';
-    }
-
-    $checkIneligibleSql = '
-        SELECT pp.id, pp.business_name, pp.verification_status, pp.availability_status, pp.marketplace_active,
-               u.name AS provider_name,
-               (SELECT COUNT(*) FROM services s WHERE s.provider_id = pp.id AND s.is_active = 1) AS active_services_count
-        FROM provider_profiles pp
-        INNER JOIN users u ON u.id = pp.user_id
-        WHERE ' . implode(' AND ', $whereClauses) . '
-        LIMIT 1';
-
-    $checkIneligibleStmt = $pdo->prepare($checkIneligibleSql);
-    $checkIneligibleStmt->execute($params);
-    $ineligibleProvider = $checkIneligibleStmt->fetch();
-
-    if ($ineligibleProvider) {
-        $reasons = [];
-        if ($ineligibleProvider['verification_status'] !== 'approved') {
-            $reasons[] = 'profile verification is ' . $ineligibleProvider['verification_status'];
-        }
-        if ($ineligibleProvider['availability_status'] === 'offline') {
-            $reasons[] = 'provider status is currently offline';
-        }
-        if ((int)$ineligibleProvider['marketplace_active'] !== 1) {
-            $reasons[] = 'marketplace listing is inactive';
-        }
-        if ((int)$ineligibleProvider['active_services_count'] === 0) {
-            $reasons[] = 'no active services are currently listed';
+    try {
+        $queryTokens = matchingTokens($filters['q']);
+        if (empty($queryTokens)) {
+            $queryTokens = [trim($filters['q'])];
         }
 
-        if ($reasons !== []) {
-            $ineligibleNotice = 'The provider "' . htmlspecialchars($ineligibleProvider['business_name'], ENT_QUOTES, 'UTF-8') . '" was found in the database, but cannot be booked at this time because ' . htmlspecialchars(implode(', ', $reasons), ENT_QUOTES, 'UTF-8') . '.';
+        $whereClauses = [];
+        $params = [];
+        foreach ($queryTokens as $idx => $token) {
+            $paramKey = ':token_' . $idx;
+            $whereClauses[] = '(pp.business_name LIKE ' . $paramKey . ' OR u.name LIKE ' . $paramKey . ')';
+            $params[$paramKey] = '%' . $token . '%';
         }
+
+        $checkIneligibleSql = '
+            SELECT pp.id, pp.business_name, pp.verification_status, pp.availability_status, pp.marketplace_active,
+                   u.name AS provider_name,
+                   (SELECT COUNT(*) FROM services s WHERE s.provider_id = pp.id AND s.is_active = 1) AS active_services_count
+            FROM provider_profiles pp
+            INNER JOIN users u ON u.id = pp.user_id
+            WHERE ' . implode(' AND ', $whereClauses) . '
+            LIMIT 1';
+
+        $checkIneligibleStmt = $pdo->prepare($checkIneligibleSql);
+        $checkIneligibleStmt->execute($params);
+        $ineligibleProvider = $checkIneligibleStmt->fetch();
+
+        if ($ineligibleProvider) {
+            $reasons = [];
+            if ($ineligibleProvider['verification_status'] !== 'approved') {
+                $reasons[] = 'profile verification is ' . $ineligibleProvider['verification_status'];
+            }
+            if ($ineligibleProvider['availability_status'] === 'offline') {
+                $reasons[] = 'provider status is currently offline';
+            }
+            if ((int)$ineligibleProvider['marketplace_active'] !== 1) {
+                $reasons[] = 'marketplace listing is inactive';
+            }
+            if ((int)$ineligibleProvider['active_services_count'] === 0) {
+                $reasons[] = 'no active services are currently listed';
+            }
+
+            if ($reasons !== []) {
+                $ineligibleNotice = 'The provider "' . htmlspecialchars($ineligibleProvider['business_name'], ENT_QUOTES, 'UTF-8') . '" was found in the database, but cannot be booked at this time because ' . htmlspecialchars(implode(', ', $reasons), ENT_QUOTES, 'UTF-8') . '.';
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('ServeIQ ineligible provider check notice: ' . $e->getMessage());
     }
 }
 
