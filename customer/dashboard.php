@@ -92,7 +92,7 @@ require __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- PART E: PRIMARY PROBLEM-SOLVER HERO CARD -->
+        <!-- PRIMARY PROBLEM-SOLVER HERO CARD -->
         <div class="hero-solve-card mb-5">
             <div class="row g-4 align-items-center">
                 <div class="col-lg-7">
@@ -131,38 +131,30 @@ require __DIR__ . '/../includes/header.php';
                 </div>
 
                 <div class="col-lg-5">
-                    <div class="p-3 bg-light rounded-4 border">
-                        <span class="section-kicker text-primary"><i class="bi bi-diagram-3 me-1"></i>ServeIQ 7-Stage Pipeline</span>
+                    <div class="p-3 workflow-summary-card rounded-4 border">
+                        <span class="section-kicker text-primary"><i class="bi bi-diagram-3 me-1"></i>ServeIQ Problem-Solving Workflow</span>
                         <h3 class="h6 mb-3">How Your Problem Gets Resolved</h3>
                         
                         <div class="d-flex flex-column gap-2 small">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">1</span>
-                                <span><strong>Problem Description</strong> — Natural language input</span>
+                                <span><strong>Describe Problem</strong> — Natural language problem description</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">2</span>
-                                <span><strong>Service Analysis</strong> — Deterministic diagnostic extraction</span>
+                                <span><strong>Service Analysis</strong> — Category, symptoms &amp; urgency context</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">3</span>
-                                <span><strong>Optional enhancement</strong> — A local rule-enhanced layer may add context and follow-up questions</span>
+                                <span><strong>Provider Matching</strong> — Verified local provider ranking</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">4</span>
-                                <span><strong>Provider Matching</strong> — 6-factor weighted ranking</span>
+                                <span><strong>Book Service</strong> — Schedule appointment time</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">5</span>
-                                <span><strong>ADCS Consensus</strong> — Independent provider consensus</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-primary rounded-circle p-1" style="width: 22px; height: 22px;">6</span>
-                                <span><strong>Service Booking</strong> — 4-stage booking state lifecycle</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-success rounded-circle p-1" style="width: 22px; height: 22px;">7</span>
-                                <span><strong>Trust &amp; Review</strong> — Verified customer ratings</span>
+                                <span class="badge bg-success rounded-circle p-1" style="width: 22px; height: 22px;">5</span>
+                                <span><strong>Trust &amp; Review</strong> — Rate completed service quality</span>
                             </div>
                         </div>
                     </div>

@@ -72,9 +72,19 @@ function marketplaceFilterAndSortProviders(array $providers, array $filters, arr
         if ($filters['available'] && $provider['availability_status'] !== 'available') continue;
         if ($filters['distance'] !== null && ($provider['distance_km'] === null || $provider['distance_km'] > $filters['distance'])) continue;
         if ($filters['q'] !== '') {
-            $corpus = $provider['business_name'] . ' ' . $provider['provider_name'] . ' ' . $provider['city'] . ' ' . $provider['area'];
-            foreach ($eligibleServices as $service) $corpus .= ' ' . $service['category_name'] . ' ' . $service['service_name'] . ' ' . $service['description'];
-            if (!str_contains(matchingNormalize($corpus), matchingNormalize($filters['q']))) continue;
+            $normalizedCorpus = matchingNormalize($provider['business_name'] . ' ' . $provider['provider_name'] . ' ' . $provider['city'] . ' ' . $provider['area']);
+            foreach ($eligibleServices as $service) {
+                $normalizedCorpus .= ' ' . matchingNormalize($service['category_name'] . ' ' . $service['service_name'] . ' ' . ($service['description'] ?? ''));
+            }
+            $normalizedQuery = matchingNormalize($filters['q']);
+            $queryTokens = matchingTokens($filters['q']);
+
+            $matchesSubstring = str_contains($normalizedCorpus, $normalizedQuery);
+            $matchesTokens = !empty($queryTokens) && count(array_intersect($queryTokens, matchingTokens($normalizedCorpus))) === count($queryTokens);
+
+            if (!$matchesSubstring && !$matchesTokens) {
+                continue;
+            }
         }
         $provider['locality_match'] = matchingNormalize((string)$request['area']) !== ''
             && matchingNormalize((string)$request['area']) === matchingNormalize((string)$provider['area']);
